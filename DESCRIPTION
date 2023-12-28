@@ -1,0 +1,51 @@
+Package: ElasticIntegrative
+Title: Elastic Integrative Analyses for the Heterogenous Treatment Effect 
+  Combining a Randomized Trial and a Real-World Evidence Study
+Version: 1.0
+Authors@R: c(
+    person("Shu", "Yang", , "syang24@ncsu.edu", role = c("aut")),
+    person("Chenyin", "Gao", , "cgao6@ncsu.edu", role = c("aut")),
+    person("Shannon", "Holloway", , "shannon.t.holloway@gmail.com", role = c("aut", "cre"))
+    )
+Description: Elastic integrative analyses for the heterogenous treatment effect 
+  combining a randomized trial and a real-world evidence study. When the 
+  real-world evidence data are not subject o bias, the approach combines the 
+  trial and real-world data for efficient estimation of treatment effect. A 
+  data-adaptive procedure is provided to select the test threshold and
+  a bootstrap procedure to estimate elastic confidence intervals.
+  Yang, S., Gao, C., Zeng, D., and Wang, X. (2023) <DOI:10.1093/jrsssb/qkad017>.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    expm,
+    MASS,
+    mvtnorm,
+    rootSolve,
+    stats,
+    SuperLearner,
+    nnls
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)
+LazyData: true
+Collate: 
+    'bias.R'
+    'bootFunc.R'
+    'cGamma.R'
+    'utils.R'
+    'stopTests.R'
+    'sigma_matrices.R'
+    'sieveEstimator.R'
+    'propensityScore.R'
+    'outcome.R'
+    'scores.R'
+    'psiEst.R'
+    'perturbationEst.R'
+    'elasticHTE.R'
+    's3_methods.R'
+    'toyData.R'
