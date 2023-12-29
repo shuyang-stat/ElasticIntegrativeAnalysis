@@ -35,20 +35,14 @@ summary.elasticHTE <- function(object, ...) {
 
   psi <- lapply(1L:nrow(est.mat),
                 function(i) {
-                  data.frame("est" = est.mat[1L, ],
-                             "ve" = ve.mat[1L, ],
-                             "CI_lower" = inf.mat[1L, ],
-                             "CI_upper" = sup.mat[1L, ])
+                  data.frame("est" = est.mat[i, ],
+                             "ve" = ve.mat[i, ],
+                             "CI_lower" = inf.mat[i, ],
+                             "CI_upper" = sup.mat[i, ])
                 })
   names(psi) <- rownames(est.mat)
 
-  nuis <- list("gamma" = object$nuispar$gamma[1L],
-               "c.gamma" = object$nuispar$c_gamma[1L],
-               "Icomb" = object$nuispar$Icomb[1L],
-               "Icomb.pval" = object$nuispar$Icomb.pval[1L],
-               "eta" = object$nuispar$eta)
-
   list("psi" = psi,
-       "nuispar" = object$nuispar,
+       "nuispar" = object$nuispar[c("gamma", "c.gamma", "Icomb", "Icomb.pval", "eta")],
        "Tstat" = object$Tstat)
 }

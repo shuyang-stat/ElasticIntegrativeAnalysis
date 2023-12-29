@@ -424,6 +424,11 @@ elasticHTE <- function(data.rct,
               "elastic.debiased" = nuispar$V.elastic)
   nuispar$V.elastic <- NULL
 
+  cis$CIs.inf <- rbind(cis$CIs.inf,
+                       "elastic.debiased" = cis$CIs.inf["elastic", ])
+  cis$CIs.sup <- rbind(cis$CIs.sup,
+                       "elastic.debiased" = cis$CIs.sup["elastic", ])
+
   obj <- c(list("call" = match.call(),
                 "psi" = psi, "ve" = ve,
                 "nuispar" = nuispar, "Tstat" = Tstat), cis)
