@@ -67,7 +67,7 @@
     res$ml.sigma0 <- {{Y[subset] - res$ml.mu0[subset]}^2} |> mean() |> sqrt()
 
   } else {
-    message("no A = 1 cases; fitted outcomes and sigma set to 0.0")
+    message("no A = 0 cases; fitted outcomes and sigma set to 0.0")
     res$mu0 <- numeric(nrow(X))
     res$ml.mu0 <- numeric(nrow(X))
     res$ml.sigma0 <- 0.0
