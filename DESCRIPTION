@@ -1,7 +1,8 @@
 Package: ElasticIntegrative
 Title: Elastic Integrative Analyses for the Heterogenous Treatment Effect 
   Combining a Randomized Trial and a Real-World Evidence Study
-Version: 1.0
+Version: 0.2
+Date: 2024-01-17
 Authors@R: c(
     person("Shu", "Yang", , "syang24@ncsu.edu", role = c("aut")),
     person("Chenyin", "Gao", , "cgao6@ncsu.edu", role = c("aut")),
