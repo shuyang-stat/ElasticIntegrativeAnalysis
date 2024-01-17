@@ -1,38 +1,31 @@
+withr::with_seed(1234L, {
+  n <- 1000L
+  m <- n * 10L
+  p <- 3L
+  data.rct <- list()
+  data.rct$X <- matrix(stats::rnorm(n * p), n, p,
+                       dimnames = list(NULL, paste0("X", 1L:p)))
+  beta <- stats::runif(p + 1L, -1.0,1.0)
+  data.rct$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
+  data.rct$A <- stats::rbinom(n, 1, 0.4)
+
+  data.rwe <- list()
+  data.rwe$X <- matrix(stats::rnorm(m * p), m, p,
+                       dimnames = list(NULL, paste0("X", 1L:p)))
+  data.rwe$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(m)
+  data.rwe$A <- stats::rbinom(m, 1, 0.35)
+})
+
+test_object <- withr::with_seed(2345L,
+                                elasticHTE(data.rct, data.rwe,
+                                           n.boot = 10L, n.gamma = 10L,
+                                           n.pert = 10L))
+
 test_that("`print()`", {
-  withr::with_seed(1234L, {
-    data.rct <- list()
-    data.rct$X <- matrix(stats::rnorm(300), 100, 3,
-                         dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rct$Y <- stats::rnorm(100)
-    data.rct$A <- stats::rbinom(100, 1, 0.4)
-
-    data.rwe <- list()
-    data.rwe$X <- matrix(stats::rnorm(3000), 1000, 3,
-                         dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rwe$Y <- stats::rnorm(1000)
-    data.rwe$A <- stats::rbinom(1000, 1, 0.35)
-  })
-  test_object <- withr::with_seed(2345L, elasticHTE(data.rct, data.rwe))
-
-  expect_equal(print(test_object), test_object)
+  expect_invisible(out <- capture_output(print(test_object)))
 })
 
 test_that("`summary()`", {
-  withr::with_seed(1234L, {
-    data.rct <- list()
-    data.rct$X <- matrix(stats::rnorm(300), 100, 3,
-                         dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rct$Y <- stats::rnorm(100)
-    data.rct$A <- stats::rbinom(100, 1, 0.4)
-
-    data.rwe <- list()
-    data.rwe$X <- matrix(stats::rnorm(3000), 1000, 3,
-                         dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rwe$Y <- stats::rnorm(1000)
-    data.rwe$A <- stats::rbinom(1000, 1, 0.35)
-  })
-  test_object <- withr::with_seed(2345L, elasticHTE(data.rct, data.rwe))
-
   # n.estimator x p-1 matrix
   keep_cols <- c("X1", "X2", "X3")
   est.mat <- test_object$psi[, keep_cols]

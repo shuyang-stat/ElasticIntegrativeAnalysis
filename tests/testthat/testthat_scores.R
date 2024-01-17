@@ -490,7 +490,6 @@ test_that("`.evaluatedScore()` returns expected results", {
   psi <- c("aa" = 0.1, "X2" = 1.0, "X1" = 2.0, "X3" = 3.0, "X4" = 4.0)
 
   expected <- .score.binary(psi = psi, X = X, Y = Y, A = A, wgt = wgt, ps = ps, mu0 = mu0)
-  expected <- expected * 2.0
 
   data <- list("X" = X, "Y" = Y, "A" = A, "q" = wgt, "ml.ps" = ps, "ml.mu0" = mu0,
                "ml.sigma0" = 0.5)
@@ -546,7 +545,6 @@ test_that("`.evaluatedScore()` returns expected results; single covariate", {
 
   expected <- .score.binary(psi = psi, X = X[, "X2", drop = FALSE],
                             Y = Y, A = A, wgt = wgt, ps = ps, mu0 = mu0)
-  expected <- expected * 2.0
 
   data <- list("X" = X, "Y" = Y, "A" = A, "q" = wgt, "ml.ps" = ps, "ml.mu0" = mu0,
                "ml.sigma0" = 0.5)
@@ -602,7 +600,6 @@ test_that("`.evaluatedScore()` returns expected results; no covariate", {
 
   expected <- .score.binary(psi = psi, X = matrix(0, n, 0L),
                             Y = Y, A = A, wgt = wgt, ps = ps, mu0 = mu0)
-  expected <- expected * 2.0
 
   data <- list("X" = X, "Y" = Y, "A" = A, "q" = wgt, "ml.ps" = ps, "ml.mu0" = mu0,
                "ml.sigma0" = 0.5)
@@ -654,7 +651,6 @@ test_that("`.evaluatedScore()` returns expected results; no covariate", {
 
   expected <- .score.binary(psi = psi, X = matrix(0, n, 0L),
                             Y = Y, A = A, wgt = wgt, ps = ps, mu0 = mu0)
-  expected <- expected * 2.0
 
   data <- list("X" = X, "Y" = Y, "A" = A, "q" = wgt, "ml.ps" = ps, "ml.mu0" = mu0,
                "ml.sigma0" = 0.5)

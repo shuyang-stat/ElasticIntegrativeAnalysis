@@ -63,32 +63,13 @@ test_that("`.outcome()` returns expected errors", {
 
   expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
                         sieve.degree = 2L),
-               "`method` must be one of {'glm', 'sl'}", fixed = TRUE)
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = 1.0),
-               "`method` must be one of {'glm', 'sl'}", fixed = TRUE)
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = c("glm", "sl")),
-               "`method` must be one of {'glm', 'sl'}", fixed = TRUE)
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = c("sl", "glm")),
-               "`method` must be one of {'glm', 'sl'}", fixed = TRUE)
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = "Glm"),
-               "`method` must be one of {'glm', 'sl'}", fixed = TRUE)
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = "SL"),
-               "`method` must be one of {'glm', 'sl'}", fixed = TRUE)
-
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = "sl"),
                "`method.controls` must be a list")
   expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = "sl",
+                        sieve.degree = 2L,
                         method.controls = c("family" = "binomial")),
                "`method.controls` must be a list")
   expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
-                        sieve.degree = 2L, method = "sl",
+                        sieve.degree = 2L,
                         method.controls = 1.0),
                "`method.controls` must be a list")
 
@@ -98,38 +79,35 @@ test_that("`.outcome()` returns the expected results", {
 
   n <- 1000L
 
-  X <- withr::with_seed(1234L, matrix(runif(3*n), n, 3))
-  X <- cbind(X, withr::with_seed(3456L, rbinom(n, 1, 0.3)))
+  X <- withr::with_seed(1234L, matrix(stats::runif(3*n), n, 3))
+  X <- cbind(X, withr::with_seed(3456L, stats::rbinom(n, 1, 0.3)))
   colnames(X) <- c("X1", "X2", "X3", "X4")
   A <- c(rep(0L, n/2), rep(1L, n/2))
   wgt <- rep(1.0, n)
-  Y <- withr::with_seed(4567L, rnorm(n))
+  beta <- withr::with_seed(2345L, stats::runif(ncol(X) + 1L, -1.0, 1.0))
+  Y <- drop(X %*% beta[-1L]) + beta[1L]
 
-  method <- "glm"
-  method.controls <- list("family" = gaussian())
+  method.controls <- list("family" = gaussian(), "SL.library" = "SL.glm")
 
   res <- list()
 
   res$mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                              sieve.degree = 1L,
                              subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
-                             method = method,
                              method.controls = method.controls)
   res$ml.mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
-                                method = method,
                                 method.controls = method.controls)
   res$ml.sigma0 <- {{Y[1L:{n/2}] - res$ml.mu0[1L:{n/2}]}^2} |> mean() |> sqrt()
 
   res$ml.mu1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(FALSE, n/2), rep(TRUE, n/2)),
-                                method = method,
                                 method.controls = method.controls)
 
   expect_equal(.outcome(X = X, Y = Y, A = A, wgt = wgt, sieve.degree = 2L,
-                        method = method, method.controls = method.controls),
+                        method.controls = method.controls),
                res)
 
 })
@@ -142,33 +120,30 @@ test_that("`.outcome()` returns the expected results; single covariate", {
   colnames(X) <- c("X1")
   A <- c(rep(0L, n/2), rep(1L, n/2))
   wgt <- rep(1.0, n)
-  Y <- withr::with_seed(4567L, rnorm(n))
+  beta <- withr::with_seed(2345L, stats::runif(ncol(X) + 1L, -1.0, 1.0))
+  Y <- drop(X %*% beta[-1L]) + beta[1L]
 
-  method <- "glm"
-  method.controls <- list("family" = gaussian())
+  method.controls <- list("family" = gaussian(), "SL.library" = "SL.glm")
 
   res <- list()
 
   res$mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                              sieve.degree = 1L,
                              subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
-                             method = method,
                              method.controls = method.controls)
   res$ml.mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
-                                method = method,
                                 method.controls = method.controls)
   res$ml.sigma0 <- {{Y[1L:{n/2}] - res$ml.mu0[1L:{n/2}]}^2} |> mean() |> sqrt()
 
   res$ml.mu1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(FALSE, n/2), rep(TRUE, n/2)),
-                                method = method,
                                 method.controls = method.controls)
 
   expect_equal(.outcome(X = X, Y = Y, A = A, wgt = wgt, sieve.degree = 2L,
-                        method = method, method.controls = method.controls),
+                        method.controls = method.controls),
                res)
 
 })
@@ -180,33 +155,30 @@ test_that("`.outcome()` returns the expected results; no covariate", {
   X <- matrix(NA_real_, n, 0L)
   A <- c(rep(0L, n/2), rep(1L, n/2))
   wgt <- rep(1.0, n)
-  Y <- withr::with_seed(4567L, rnorm(n))
+  beta <- withr::with_seed(2345L, stats::runif(ncol(X) + 1L, -1.0, 1.0))
+  Y <- drop(X %*% beta[-1L]) + beta[1L]
 
-  method <- "glm"
-  method.controls <- list("family" = gaussian())
+  method.controls <- list("family" = gaussian(), "SL.library" = "SL.glm")
 
   res <- list()
 
   res$mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                              sieve.degree = 1L,
                              subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
-                             method = method,
                              method.controls = method.controls)
   res$ml.mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
-                                method = method,
                                 method.controls = method.controls)
   res$ml.sigma0 <- {{Y[1L:{n/2}] - res$ml.mu0[1L:{n/2}]}^2} |> mean() |> sqrt()
 
   res$ml.mu1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(FALSE, n/2), rep(TRUE, n/2)),
-                                method = method,
                                 method.controls = method.controls)
 
   expect_equal(.outcome(X = X, Y = Y, A = A, wgt = wgt, sieve.degree = 2L,
-                        method = method, method.controls = method.controls),
+                        method.controls = method.controls),
                res)
 
 })

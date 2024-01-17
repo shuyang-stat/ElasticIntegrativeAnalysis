@@ -76,10 +76,10 @@ test_that("`.rootsOfScore()` returns expected results; cont", {
       } else {
         X <- matrix(NA_real_, n, 0L)
       }
-      beta <- runif(p+1)
+      beta <- stats::runif(p+1)
       A <- stats::rbinom(n, 1, 0.3)
 
-      Y <- {beta[1L] + X %*% beta[-1L] * {1 + A} + rnorm(n)} |> drop()
+      Y <- {beta[1L] + X %*% beta[-1L] * {1 + A} + stats::rnorm(n)} |> drop()
 
       wgt <- rep(1.0, n)
       ps <- rep(0.5, n)
@@ -211,69 +211,60 @@ test_that("`.psiEstDataPrep()` returns expected errors", {
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName),
-               "`outcome.method` must be provided")
-  expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
-                               outcome.method = "glm"),
                "`outcome.controls` must be provided")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list()),
+                               outcome.controls = list()),
                "`psName` must be NULL or a character vector")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = NA),
                "`psName` must be NULL or a character vector")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = c("x1", "X2")),
                "`psName` must be NULL or a character vector")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = matrix(c("X1", "X2"), 2, 1L)),
                "`psName` must be NULL or a character vector")
   psName <- c("X1", "X2", "X3")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = psName),
-               "`ps.method` must be provided")
-  expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
-                               psName = psName, ps.method = "glm"),
                "`ps.controls` must be provided")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = psName,
-                               ps.method = "glm", ps.controls = list()),
+                               ps.controls = list()),
                "`fit.name` must be a character object")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = psName,
-                               ps.method = "glm", ps.controls = list(),
+                               ps.controls = list(),
                                fit.name = 1),
                "`fit.name` must be a character object")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = psName,
-                               ps.method = "glm", ps.controls = list(),
+                               ps.controls = list(),
                                fit.name = c("a", "b")),
                "`fit.name` must be a character object")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName, contName = contName,
-                               outcome.method = "glm", outcome.controls = list(),
+                               outcome.controls = list(),
                                psName = psName,
-                               ps.method = "glm", ps.controls = list(),
+                               ps.controls = list(),
                                fit.name = matrix("a", nrow = 1L, ncol = 1L)),
                "`fit.name` must be a character object")
 })
@@ -284,11 +275,12 @@ test_that("`psiEstDataPrep()` returns expected results", {
   p <- 3L
 
   withr::with_seed(1234L, {
+    beta <- stats::runif(p + 1L, -1.0, 1.0)
     data <- list("X" = matrix(stats::rnorm(n*p), n, p,
                               dimnames = list(NULL, paste0("X", seq_len(p)))),
-                 "Y" = stats::rnorm(n),
                  "A" = stats::rbinom(n, 1, 0.5),
                  "q" = rep(1, n))
+    data$Y <- drop(data$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
   })
 
   # do not estimate propensity
@@ -296,10 +288,8 @@ test_that("`psiEstDataPrep()` returns expected results", {
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 2,
                                mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                               outcome.method = "glm",
                                outcome.controls = list("family" = "gaussian"),
                                psName = c("X1", "X2", "X3"),
-                               ps.method = "glm",
                                ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                "ps must be provided for testing")
@@ -314,17 +304,17 @@ test_that("`psiEstDataPrep()` returns expected results", {
                       Y = data$Y,
                       A = data$A, wgt = data$q,
                       sieve.degree = 2L,
-                      method = "glm",
-                      method.controls = list("family" = gaussian()))
+                      method.controls = list("family" = gaussian(),
+                                             "SL.library" = "SL.glm"))
   expected[names(outcome)] <- outcome
 
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2,
                                mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                               outcome.method = "glm",
-                               outcome.controls = list("family" = "gaussian"),
+                               outcome.controls = list("family" = "gaussian",
+                                                       "SL.library" = "SL.glm"),
                                psName = c("X1", "X2", "X3"),
-                               ps.method = "glm",
-                               ps.controls = list("family" = "binomial"),
+                               ps.controls = list("family" = "binomial",
+                                                  "SL.library" = "SL.glm"),
                                fit.name = "testing"),
                expected)
 
@@ -334,19 +324,19 @@ test_that("`psiEstDataPrep()` returns expected results", {
                          A = data$A,
                          wgt = data$q,
                          sieve.degree = 2L,
-                         method = "glm",
-                         method.controls = list("family" = binomial),
+                         method.controls = list("family" = binomial,
+                                                "SL.library" = "SL.glm"),
                          models = c("ps", "ml.ps"))
   expected[names(ps)] <- ps
 
   data$est.ps <- TRUE
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2,
                                mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                               outcome.method = "glm",
-                               outcome.controls = list("family" = "gaussian"),
+                               outcome.controls = list("family" = "gaussian",
+                                                       "SL.library" = "SL.glm"),
                                psName = c("X1", "X2", "X3"),
-                               ps.method = "glm",
-                               ps.controls = list("family" = "binomial"),
+                               ps.controls = list("family" = "binomial",
+                                                  "SL.library" = "SL.glm"),
                                fit.name = "testing"),
                expected)
 
@@ -358,8 +348,9 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
 
   n <- 1000L
   withr::with_seed(1234L, {
+    beta <- stats::runif(1L, -1.0, 1.0)
     data <- list("X" = matrix(NA, n, 0L),
-                 "Y" = stats::rnorm(n),
+                 "Y" = rep(beta, n) + stats::rnorm(n),
                  "A" = stats::rbinom(n, 1, 0.5),
                  "q" = rep(1, n))
   })
@@ -369,11 +360,11 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
   data$est.ps <- FALSE
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 2,
                                mainName = NULL, contName = NULL,
-                               outcome.method = "glm",
-                               outcome.controls = list("family" = "gaussian"),
+                               outcome.controls = list("family" = "gaussian",
+                                                       "SL.library" = "SL.glm"),
                                psName = NULL,
-                               ps.method = "glm",
-                               ps.controls = list("family" = "binomial"),
+                               ps.controls = list("family" = "binomial",
+                                                  "SL.library" = "SL.glm"),
                                fit.name = "testing"),
                "ps must be provided for testing")
 
@@ -386,18 +377,18 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
                       Y = data$Y,
                       A = data$A, wgt = data$q,
                       sieve.degree = 2L,
-                      method = "glm",
-                      method.controls = list("family" = gaussian()))
+                      method.controls = list("family" = gaussian(),
+                                             "SL.library" = "SL.glm"))
   expected[names(outcome)] <- outcome
 
   expected$est.ps <- NULL
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2,
                                mainName = NULL, contName = NULL,
-                               outcome.method = "glm",
-                               outcome.controls = list("family" = "gaussian"),
+                               outcome.controls = list("family" = "gaussian",
+                                                       "SL.library" = "SL.glm"),
                                psName = NULL,
-                               ps.method = "glm",
-                               ps.controls = list("family" = "binomial"),
+                               ps.controls = list("family" = "binomial",
+                                                  "SL.library" = "SL.glm"),
                                fit.name = "testing"),
                expected)
 
@@ -407,19 +398,19 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
                          A = data$A,
                          wgt = data$q,
                          sieve.degree = 2L,
-                         method = "glm",
-                         method.controls = list("family" = binomial),
+                         method.controls = list("family" = binomial,
+                                                "SL.library" = "SL.glm"),
                          models = c("ps", "ml.ps"))
   expected[names(ps)] <- ps
 
   data$est.ps <- TRUE
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2L,
                                mainName = NULL, contName = NULL,
-                               outcome.method = "glm",
-                               outcome.controls = list("family" = "gaussian"),
+                               outcome.controls = list("family" = "gaussian",
+                                                       "SL.library" = "SL.glm"),
                                psName = NULL,
-                               ps.method = "glm",
-                               ps.controls = list("family" = "binomial"),
+                               ps.controls = list("family" = "binomial",
+                                                  "SL.library" = "SL.glm"),
                                fit.name = "testing"),
                expected)
 
@@ -518,33 +509,29 @@ test_that("`.psiEst()` returns expected errors", {
 
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                          outcome.type = "cont", mainName = mainName, contName = contName),
-                 "`outcome.method` must be provided")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName, contName = contName,
-                         outcome.method = "glm"),
                  "`outcome.controls` must be provided")
 
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                          outcome.type = "cont", mainName = mainName,
                          contName = contName,
-                         outcome.method = "glm", outcome.controls = list()),
+                         outcome.controls = list()),
                  "`psName` must be NULL or a character vector")
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                          outcome.type = "cont", mainName = mainName,
                          contName = contName,
-                         outcome.method = "glm", outcome.controls = list(),
+                         outcome.controls = list(),
                          psName = NA),
                  "`psName` must be NULL or a character vector")
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                          outcome.type = "cont", mainName = mainName,
                          contName = contName,
-                         outcome.method = "glm", outcome.controls = list(),
+                         outcome.controls = list(),
                          psName = c("X1", "X2", "X3")),
                  "`psName` must be NULL or a character vector")
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                          outcome.type = "cont", mainName = mainName,
                          contName = contName,
-                         outcome.method = "glm", outcome.controls = list(),
+                         outcome.controls = list(),
                          psName = matrix(c("X1", "X2"), 2, 1L)),
                  "`psName` must be NULL or a character vector")
     psName <- c("X2", "X3")
@@ -552,14 +539,8 @@ test_that("`.psiEst()` returns expected errors", {
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                          outcome.type = "cont", mainName = mainName,
                          contName = contName,
-                         outcome.method = "glm", outcome.controls = list(),
+                         outcome.controls = list(),
                          psName = psName),
-                 "`ps.method` must be provided")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = contName,
-                         outcome.method = "glm", outcome.controls = list(),
-                         psName = psName, ps.method = "glm"),
                  "`ps.controls` must be provided")
 
 })
@@ -570,11 +551,12 @@ test_that("`.psiEst()` returns expected results", {
   p <- 3L
 
   withr::with_seed(1234L, {
+    beta <- stats::runif(p + 1L, -1.0, 1.0)
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
                                   dimnames = list(NULL, paste0("X", seq_len(p)))),
-                     "Y" = stats::rnorm(n),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
+    data.rct$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
   })
 
   data.rct$est.ps <- TRUE
@@ -582,11 +564,11 @@ test_that("`.psiEst()` returns expected results", {
                               sieve.degree = 2L,
                               mainName = c("X2", "X3"),
                               contName = c("X2", "X3"),
-                              outcome.method = "glm",
-                              outcome.controls = list("family" = gaussian()),
+                              outcome.controls = list("family" = gaussian(),
+                                                      "SL.library" = "SL.glm"),
                               psName = c("X2", "X3"),
-                              ps.method = "glm",
-                              ps.controls = list("family" = binomial()),
+                              ps.controls = list("family" = binomial(),
+                                                 "SL.library" = "SL.glm"),
                               fit.name = "RWE")
   data.rwe <- data.rct
 
@@ -645,11 +627,12 @@ test_that("`.psiEst()` returns expected results", {
 
   expected <- list("psi" = psi, "weighted.score" = weighted_score)
   withr::with_seed(1234L, {
+    beta <- stats::runif(p + 1L, -1.0, 1.0)
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
                                   dimnames = list(NULL, paste0("X", seq_len(p)))),
-                     "Y" = stats::rnorm(n),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
+    data.rct$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
   })
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
@@ -657,11 +640,11 @@ test_that("`.psiEst()` returns expected results", {
   expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                        outcome.type = "cont",
                        mainName = c("X2", "X3"), contName = c("X2", "X3"),
-                       outcome.method = "glm",
-                       outcome.controls = list("family" = gaussian()),
+                       outcome.controls = list("family" = gaussian(),
+                                               "SL.library" = "SL.glm"),
                        psName = c("X2", "X3"),
-                       ps.method = "glm",
-                       ps.controls = list("family" = binomial())),
+                       ps.controls = list("family" = binomial(),
+                                          "SL.library" = "SL.glm")),
                expected)
 
 })
@@ -673,11 +656,12 @@ test_that("`.psiEst()` returns expected results; one covariate", {
   p <- 1L
 
   withr::with_seed(1234L, {
+    beta <- stats::runif(p + 1L, -1.0, 1.0)
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
                                   dimnames = list(NULL, paste0("X", seq_len(p)))),
-                     "Y" = stats::rnorm(n),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
+    data.rct$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
   })
 
   data.rct$est.ps <- TRUE
@@ -685,11 +669,11 @@ test_that("`.psiEst()` returns expected results; one covariate", {
                               sieve.degree = 2L,
                               mainName = c("X1"),
                               contName = c("X1"),
-                              outcome.method = "glm",
-                              outcome.controls = list("family" = gaussian()),
+                              outcome.controls = list("family" = gaussian(),
+                                                      "SL.library" = "SL.glm"),
                               psName = c("X1"),
-                              ps.method = "glm",
-                              ps.controls = list("family" = binomial()),
+                              ps.controls = list("family" = binomial(),
+                                                 "SL.library" = "SL.glm"),
                               fit.name = "RWE")
   data.rwe <- data.rct
 
@@ -748,11 +732,12 @@ test_that("`.psiEst()` returns expected results; one covariate", {
 
   expected <- list("psi" = psi, "weighted.score" = weighted_score)
   withr::with_seed(1234L, {
+    beta <- stats::runif(p + 1L, -1.0, 1.0)
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
                                   dimnames = list(NULL, paste0("X", seq_len(p)))),
-                     "Y" = stats::rnorm(n),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
+    data.rct$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
   })
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
@@ -760,11 +745,11 @@ test_that("`.psiEst()` returns expected results; one covariate", {
   expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                        outcome.type = "cont",
                        mainName = c("X1"), contName = c("X1"),
-                       outcome.method = "glm",
-                       outcome.controls = list("family" = gaussian()),
+                       outcome.controls = list("family" = gaussian(),
+                                               "SL.library" = "SL.glm"),
                        psName = c("X1"),
-                       ps.method = "glm",
-                       ps.controls = list("family" = binomial())),
+                       ps.controls = list("family" = binomial(),
+                                          "SL.library" = "SL.glm")),
                expected)
 
 })
@@ -776,7 +761,7 @@ test_that("`.psiEst()` returns expected results; no covariate", {
 
   withr::with_seed(1234L, {
     data.rct <- list("X" = matrix(NA, n, 0),
-                     "Y" = stats::rnorm(n),
+                     "Y" = 0.5 + stats::rnorm(n),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
   })
@@ -786,11 +771,11 @@ test_that("`.psiEst()` returns expected results; no covariate", {
                               sieve.degree = 2L,
                               mainName = NULL,
                               contName = NULL,
-                              outcome.method = "glm",
-                              outcome.controls = list("family" = gaussian()),
+                              outcome.controls = list("family" = gaussian(),
+                                                      "SL.library" = "SL.glm"),
                               psName = NULL,
-                              ps.method = "glm",
-                              ps.controls = list("family" = binomial()),
+                              ps.controls = list("family" = binomial(),
+                                                 "SL.library" = "SL.glm"),
                               fit.name = "RWE")
   data.rwe <- data.rct
 
@@ -850,7 +835,7 @@ test_that("`.psiEst()` returns expected results; no covariate", {
   expected <- list("psi" = psi, "weighted.score" = weighted_score)
   withr::with_seed(1234L, {
     data.rct <- list("X" = matrix(NA, n, 0L),
-                     "Y" = stats::rnorm(n),
+                     "Y" = 0.5 + stats::rnorm(n),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
   })
@@ -860,11 +845,11 @@ test_that("`.psiEst()` returns expected results; no covariate", {
   expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
                        outcome.type = "cont",
                        mainName = NULL, contName = NULL,
-                       outcome.method = "glm",
-                       outcome.controls = list("family" = gaussian()),
+                       outcome.controls = list("family" = gaussian(),
+                                               "SL.library" = "SL.glm"),
                        psName = NULL,
-                       ps.method = "glm",
-                       ps.controls = list("family" = binomial())),
+                       ps.controls = list("family" = binomial(),
+                                          "SL.library" = "SL.glm")),
                expected)
 
 })

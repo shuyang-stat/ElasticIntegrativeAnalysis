@@ -187,32 +187,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "GLM"))
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
-                            thres.psi = 0.1,
-                            sieve.degree = 2L,
-                            outcome.type = "cont",
-                            outcome.method = "Sl"))
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
-                            thres.psi = 0.1,
-                            sieve.degree = 2L,
-                            outcome.type = "cont",
-                            outcome.method = "sll"))
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
-                            thres.psi = 0.1,
-                            sieve.degree = 2L,
-                            outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = "a"),
                  "`outcome.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
@@ -222,7 +196,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("gaussian")),
                  "`outcome.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
@@ -232,7 +205,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian", TRUE)),
                  "`outcome.controls` must be a named list")
 
@@ -243,40 +215,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "GLM"))
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
-                            thres.psi = 0.1,
-                            sieve.degree = 2L,
-                            outcome.type = "cont",
-                            outcome.method = "glm",
-                            outcome.controls = list("family" = "gaussian"),
-                            ps.method = "Sl"))
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
-                            thres.psi = 0.1,
-                            sieve.degree = 2L,
-                            outcome.type = "cont",
-                            outcome.method = "glm",
-                            outcome.controls = list("family" = "gaussian"),
-                            ps.method = "sll"))
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
-                            thres.psi = 0.1,
-                            sieve.degree = 2L,
-                            outcome.type = "cont",
-                            outcome.method = "glm",
-                            outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = "a"),
                  "`ps.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
@@ -286,9 +225,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("gaussian")),
                  "`ps.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
@@ -298,9 +235,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian", TRUE)),
                  "`ps.controls` must be a named list")
 
@@ -311,9 +246,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = 0),
                  "`fixed` must be a logical")
@@ -324,9 +257,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = c(TRUE, FALSE)),
                  "`fixed` must be a logical")
@@ -338,9 +269,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = "a"),
@@ -352,9 +281,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = c(1, 2)),
@@ -366,9 +293,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 0),
@@ -380,9 +305,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = -1L),
@@ -394,9 +317,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 100.1),
@@ -409,9 +330,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -424,9 +343,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -439,9 +356,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -454,9 +369,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -469,9 +382,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -485,9 +396,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -501,9 +410,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -517,9 +424,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -533,9 +438,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -549,9 +452,7 @@ test_that("`elasticHTE()` returns expected errors", {
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
-                            outcome.method = "glm",
                             outcome.controls = list("family" = "gaussian"),
-                            ps.method = "glm",
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
@@ -682,52 +583,59 @@ test_that("`elasticHTE()` results in expected internal errors", {
 
 test_that("`.elasticHTE()` returns expected results", {
 
+  n <- 1000L
+  m <- n * 10L
+
   withr::with_seed(1234L, {
     data.rct <- list()
-    data.rct$X <- matrix(stats::rnorm(300), 100, 3,
+    data.rct$X <- matrix(stats::rnorm(n * 3), n, 3,
                          dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rct$Y <- stats::rnorm(100)
-    data.rct$A <- stats::rbinom(100, 1, 0.4)
+    data.rct$Y <- stats::rnorm(n, 1)
+    data.rct$A <- stats::rbinom(n, 1, 0.4)
 
     data.rwe <- list()
-    data.rwe$X <- matrix(stats::rnorm(3000), 1000, 3,
+    data.rwe$X <- matrix(stats::rnorm(m * 3), m, 3,
                          dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rwe$Y <- stats::rnorm(1000)
-    data.rwe$A <- stats::rbinom(1000, 1, 0.4)
+    data.rwe$Y <- stats::rnorm(m, 1.5)
+    data.rwe$A <- stats::rbinom(m, 1, 0.4)
   })
 
   withr::with_seed(2345L, {
 
     data.rct$est.ps <- TRUE
-    data.rct$q <- rep(1.0, 100L)
-    data.rwe$q <- rep(1.0, 1000L)
-    n_rct <- 100L
-    n_rwe <- 1000L
-    thres.psi <- sqrt(log(1000))
+    data.rct$q <- rep(1.0, n)
+    data.rwe$q <- rep(1.0, m)
+    n_rct <- n
+    n_rwe <- m
+    thres.psi <- sqrt(log(m))
     psi_list <- .psiEst(data.rwe = data.rwe,
                         data.rct = data.rct,
                         sieve.degree = 2L,
                         outcome.type = "cont",
                         mainName = c("X1", "X2", "X3"),
                         contName = c("X1", "X2", "X3"),
-                        outcome.method = "glm",
-                        outcome.controls = list("family" = "gaussian"),
+                        outcome.controls = list("family" = "gaussian",
+                                                "SL.library" = "SL.glm",
+                                                "cvControl" = list(V = 2)),
                         psName = c("X1", "X2", "X3"),
-                        ps.method = "glm",
-                        ps.controls = list("family" = "quasibinomial"))
+                        ps.controls = list("family" = "quasibinomial",
+                                           "SL.library" = "SL.glm",
+                                           "cvControl" = list(V = 2)))
 
     perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                           data.rct = data.rct,
-                                          n.pert = 100L,
+                                          n.pert = 10L,
                                           sieve.degree = 2L,
                                           outcome.type = "cont",
                                           mainName = c("X1", "X2", "X3"),
                                           contName = c("X1", "X2", "X3"),
-                                          outcome.method = "glm",
-                                          outcome.controls = list("family" = "gaussian"),
+                                          outcome.controls = list("family" = "gaussian",
+                                                                  "SL.library" = "SL.glm",
+                                                                  "cvControl" = list(V = 2)),
                                           psName = c("X1", "X2", "X3"),
-                                          ps.method = "glm",
-                                          ps.controls = list("family" = "quasibinomial"))
+                                          ps.controls = list("family" = "quasibinomial",
+                                                             "SL.library" = "SL.glm",
+                                                             "cvControl" = list(V = 2)))
 
     Sigma_SS_matrices <- .calculateSigmaSSMatrices(V.rt = perm_result$V.rt,
                                                    V.eff = perm_result$V.eff,
@@ -742,7 +650,7 @@ test_that("`.elasticHTE()` returns expected results", {
     mu2 <- {perm_result$sqrt.V.eff %*% perm_result$eta} |> drop()
 
     nuispar <- .cGamma(mu1, mu2,
-                       n.gamma = 1000L,
+                       n.gamma = 10L,
                        sqrt.V.rt_eff = sqrt_V_rt_eff,
                        sqrt.V.eff = perm_result$sqrt.V.eff,
                        Tstat1 = Tstat,
@@ -767,9 +675,13 @@ test_that("`.elasticHTE()` returns expected results", {
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
                      psi.elastic = est_bias$elastic,
-                     n.rwe = n_rwe, n.boot = 100L,
+                     n.rwe = n_rwe, n.boot = 10L,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
+    cis$CIs.inf <- rbind(cis$CIs.inf,
+                         "elastic.debiased" = cis$CIs.inf["elastic", ])
+    cis$CIs.sup <- rbind(cis$CIs.sup,
+                         "elastic.debiased" = cis$CIs.sup["elastic", ])
 
     psi <- rbind(psi_list$psi,
                  "elastic" = est_bias$elastic,
@@ -786,7 +698,8 @@ test_that("`.elasticHTE()` returns expected results", {
 
   })
 
-  test_object <- withr::with_seed(2345L, elasticHTE(data.rct, data.rwe))
+  test_object <- withr::with_seed(2345L, elasticHTE(data.rct, data.rwe,
+                                                    n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
   expect_equal(test_object, obj)
@@ -796,52 +709,59 @@ test_that("`.elasticHTE()` returns expected results", {
 
 test_that("`.elasticHTE()` returns expected results; one covariate", {
 
+  n <- 1000L
+  m <- n * 10L
+
   withr::with_seed(1234L, {
     data.rct <- list()
-    data.rct$X <- matrix(stats::rnorm(300), 100, 3,
+    data.rct$X <- matrix(stats::rnorm(n*3), n, 3,
                          dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rct$Y <- stats::rnorm(100)
-    data.rct$A <- stats::rbinom(100, 1, 0.4)
+    data.rct$Y <- stats::rnorm(n, 1)
+    data.rct$A <- stats::rbinom(n, 1, 0.4)
 
     data.rwe <- list()
-    data.rwe$X <- matrix(stats::rnorm(3000), 1000, 3,
+    data.rwe$X <- matrix(stats::rnorm(m * 3), m, 3,
                          dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rwe$Y <- stats::rnorm(1000)
-    data.rwe$A <- stats::rbinom(1000, 1, 0.4)
+    data.rwe$Y <- stats::rnorm(m, 1.5)
+    data.rwe$A <- stats::rbinom(m, 1, 0.4)
   })
 
   withr::with_seed(2345L, {
 
     data.rct$est.ps <- TRUE
-    data.rct$q <- rep(1.0, 100L)
-    data.rwe$q <- rep(1.0, 1000L)
-    n_rct <- 100L
-    n_rwe <- 1000L
-    thres.psi <- sqrt(log(1000))
+    data.rct$q <- rep(1.0, n)
+    data.rwe$q <- rep(1.0, m)
+    n_rct <- n
+    n_rwe <- m
+    thres.psi <- sqrt(log(m))
     psi_list <- .psiEst(data.rwe = data.rwe,
                         data.rct = data.rct,
                         sieve.degree = 2L,
                         outcome.type = "cont",
                         mainName = c("X1"),
                         contName = c("X2"),
-                        outcome.method = "glm",
-                        outcome.controls = list("family" = "gaussian"),
+                        outcome.controls = list("family" = "gaussian",
+                                                "SL.library" = "SL.glm",
+                                                "cvControl" = list(V = 2)),
                         psName = c("X3"),
-                        ps.method = "glm",
-                        ps.controls = list("family" = "quasibinomial"))
+                        ps.controls = list("family" = "quasibinomial",
+                                           "SL.library" = "SL.glm",
+                                           "cvControl" = list(V = 2)))
 
     perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                           data.rct = data.rct,
-                                          n.pert = 100L,
+                                          n.pert = 10L,
                                           sieve.degree = 2L,
                                           outcome.type = "cont",
                                           mainName = c("X1"),
                                           contName = c("X2"),
-                                          outcome.method = "glm",
-                                          outcome.controls = list("family" = "gaussian"),
+                                          outcome.controls = list("family" = "gaussian",
+                                                                  "SL.library" = "SL.glm",
+                                                                  "cvControl" = list(V = 2)),
                                           psName = c("X3"),
-                                          ps.method = "glm",
-                                          ps.controls = list("family" = "quasibinomial"))
+                                          ps.controls = list("family" = "quasibinomial",
+                                                             "SL.library" = "SL.glm",
+                                                             "cvControl" = list(V = 2)))
 
     Sigma_SS_matrices <- .calculateSigmaSSMatrices(V.rt = perm_result$V.rt,
                                                    V.eff = perm_result$V.eff,
@@ -856,7 +776,7 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
     mu2 <- {perm_result$sqrt.V.eff %*% perm_result$eta} |> drop()
 
     nuispar <- .cGamma(mu1, mu2,
-                       n.gamma = 1000L,
+                       n.gamma = 10L,
                        sqrt.V.rt_eff = sqrt_V_rt_eff,
                        sqrt.V.eff = perm_result$sqrt.V.eff,
                        Tstat1 = Tstat,
@@ -881,9 +801,13 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
                      psi.elastic = est_bias$elastic,
-                     n.rwe = n_rwe, n.boot = 100L,
+                     n.rwe = n_rwe, n.boot = 10L,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
+    cis$CIs.inf <- rbind(cis$CIs.inf,
+                         "elastic.debiased" = cis$CIs.inf["elastic", ])
+    cis$CIs.sup <- rbind(cis$CIs.sup,
+                         "elastic.debiased" = cis$CIs.sup["elastic", ])
 
     psi <- rbind(psi_list$psi,
                  "elastic" = est_bias$elastic,
@@ -904,7 +828,8 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
                                   elasticHTE(data.rct, data.rwe,
                                              mainName = "X1",
                                              contName = "X2",
-                                             psName = "X3"))
+                                             psName = "X3",
+                                             n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
   expect_equal(test_object, obj)
@@ -914,52 +839,59 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
 
 test_that("`.elasticHTE()` returns expected results; no covariate", {
 
+  n <- 1000L
+  m <- 10L * n
+
   withr::with_seed(1234L, {
     data.rct <- list()
-    data.rct$X <- matrix(stats::rnorm(300), 100, 3,
+    data.rct$X <- matrix(stats::rnorm(n*3), n, 3,
                          dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rct$Y <- stats::rnorm(100)
-    data.rct$A <- stats::rbinom(100, 1, 0.4)
+    data.rct$Y <- stats::rnorm(n, 1)
+    data.rct$A <- stats::rbinom(n, 1, 0.4)
 
     data.rwe <- list()
-    data.rwe$X <- matrix(stats::rnorm(3000), 1000, 3,
+    data.rwe$X <- matrix(stats::rnorm(m * 3), n*10, 3,
                          dimnames = list(NULL, c("X1", "X2", "X3")))
-    data.rwe$Y <- stats::rnorm(1000)
-    data.rwe$A <- stats::rbinom(1000, 1, 0.4)
+    data.rwe$Y <- stats::rnorm(m, 1.5)
+    data.rwe$A <- stats::rbinom(m, 1, 0.4)
   })
 
   withr::with_seed(2345L, {
 
     data.rct$est.ps <- TRUE
-    data.rct$q <- rep(1.0, 100L)
-    data.rwe$q <- rep(1.0, 1000L)
-    n_rct <- 100L
-    n_rwe <- 1000L
-    thres.psi <- sqrt(log(1000))
+    data.rct$q <- rep(1.0, n)
+    data.rwe$q <- rep(1.0, m)
+    n_rct <- n
+    n_rwe <- m
+    thres.psi <- sqrt(log(m))
     psi_list <- .psiEst(data.rwe = data.rwe,
                         data.rct = data.rct,
                         sieve.degree = 2L,
                         outcome.type = "cont",
                         mainName = NULL,
                         contName = NULL,
-                        outcome.method = "glm",
-                        outcome.controls = list("family" = "gaussian"),
+                        outcome.controls = list("family" = "gaussian",
+                                                "SL.library" = "SL.glm",
+                                                "cvControl" = list(V = 2)),
                         psName = NULL,
-                        ps.method = "glm",
-                        ps.controls = list("family" = "quasibinomial"))
+                        ps.controls = list("family" = "quasibinomial",
+                                           "SL.library" = "SL.glm",
+                                           "cvControl" = list(V = 2)))
 
     perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                           data.rct = data.rct,
-                                          n.pert = 100L,
+                                          n.pert = 10L,
                                           sieve.degree = 2L,
                                           outcome.type = "cont",
                                           mainName = NULL,
                                           contName = NULL,
-                                          outcome.method = "glm",
-                                          outcome.controls = list("family" = "gaussian"),
+                                          outcome.controls = list("family" = "gaussian",
+                                                                  "SL.library" = "SL.glm",
+                                                                  "cvControl" = list(V = 2)),
                                           psName = NULL,
-                                          ps.method = "glm",
-                                          ps.controls = list("family" = "quasibinomial"))
+                                          ps.controls = list("family" = "quasibinomial",
+                                                             "SL.library" = "SL.glm",
+                                                             "cvControl" = list(V = 2)))
 
     Sigma_SS_matrices <- .calculateSigmaSSMatrices(V.rt = perm_result$V.rt,
                                                    V.eff = perm_result$V.eff,
@@ -974,7 +906,7 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
     mu2 <- {perm_result$sqrt.V.eff %*% perm_result$eta} |> drop()
 
     nuispar <- .cGamma(mu1, mu2,
-                       n.gamma = 1000L,
+                       n.gamma = 10L,
                        sqrt.V.rt_eff = sqrt_V_rt_eff,
                        sqrt.V.eff = perm_result$sqrt.V.eff,
                        Tstat1 = Tstat,
@@ -999,9 +931,13 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
                      psi.elastic = est_bias$elastic,
-                     n.rwe = n_rwe, n.boot = 100L,
+                     n.rwe = n_rwe, n.boot = 10L,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
+    cis$CIs.inf <- rbind(cis$CIs.inf,
+                         "elastic.debiased" = cis$CIs.inf["elastic", ])
+    cis$CIs.sup <- rbind(cis$CIs.sup,
+                         "elastic.debiased" = cis$CIs.sup["elastic", ])
 
     psi <- rbind(psi_list$psi,
                  "elastic" = est_bias$elastic,
@@ -1022,19 +958,21 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
                                   elasticHTE(data.rct, data.rwe,
                                              mainName = 1,
                                              contName = 1,
-                                             psName = 1))
+                                             psName = 1,
+                                             n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
   expect_equal(test_object, obj)
 
-  data.rct$X <- matrix(NA, 100, 0L)
-  data.rwe$X <- matrix(NA, 1000, 0L)
+  data.rct$X <- matrix(NA, n, 0L)
+  data.rwe$X <- matrix(NA, m, 0L)
 
   test_object <- withr::with_seed(2345L,
                                   elasticHTE(data.rct, data.rwe,
                                              mainName = 1,
                                              contName = 1,
-                                             psName = 1))
+                                             psName = 1,
+                                             n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
   expect_equal(test_object, obj)
