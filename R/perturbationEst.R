@@ -26,17 +26,11 @@
 #'   interact with the treatment variable (~ A:contName); an intercept is always
 #'   included, such that ~A is the minimal model; though it is not recommended,
 #'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain outcome model parameter estimates.
 #' @param outcome.controls A list object. Any user specified inputs to
-#'   `outcome.method`
+#'   SuperLearner::SuperLearner()
 #' @param psName A character vector. The covariates of the propensity model.
-#' @param ps.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain propensity score parameter estimates.
 #' @param ps.controls A list object. Any user specified inputs to
-#'   `ps.method`
+#'   SuperLearner::SuperLearner()
 #'
 #' @returns A list object containing $psi is a 4 * {p+1} vector containing the
 #'   preliminary, efficient integrative and RCT estimators. Element
@@ -49,9 +43,9 @@
                                       sieve.degree,
                                       outcome.type,
                                       mainName, contName,
-                                      outcome.method, outcome.controls,
+                                      outcome.controls,
                                       psName,
-                                      ps.method, ps.controls) {
+                                      ps.controls) {
 
   stopifnot(
     "`data.rct` must be a list containing X" = !missing(data.rct) &&
@@ -66,24 +60,22 @@
     "`outcome.type` must be provided" = !missing(outcome.type),
     "`mainName` must be provided" = !missing(mainName),
     "`contName` must be provided" = !missing(contName),
-    "`outcome.method` must be provided" = !missing(outcome.method),
     "`outcome.controls` must be provided" = !missing(outcome.controls),
     "`psName` must be provided" = !missing(psName),
-    "`ps.method` must be provided" = !missing(ps.method),
     "`ps.controls` must be provided" = !missing(ps.controls)
   )
 
   data.rct$q <- stats::rexp(nrow(data.rct$X))
   data.rwe$q <- stats::rexp(nrow(data.rwe$X))
+
   psi_list_p <- .psiEst(data.rct = data.rct, data.rwe = data.rwe,
                         sieve.degree = sieve.degree,
                         outcome.type = outcome.type,
                         mainName = mainName, contName = contName,
-                        outcome.method = outcome.method,
                         outcome.controls = outcome.controls,
                         psName = psName,
-                        ps.method = ps.method,
                         ps.controls = ps.controls)
+
   nms <- c(t(outer(rownames(psi_list_p$psi), colnames(psi_list_p$psi),
                    FUN = paste, sep = ".")))
   psi_list_p$psi <- c(t(psi_list_p$psi))
@@ -120,17 +112,11 @@
 #'   interact with the treatment variable (~ A:contName); an intercept is always
 #'   included, such that ~A is the minimal model; though it is not recommended,
 #'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain outcome model parameter estimates.
 #' @param outcome.controls A list object. Any user specified inputs to
-#'   `outcome.method`
+#'   SuperLearner::SuperLearner().
 #' @param psName A character vector. The covariates of the propensity model.
-#' @param ps.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain propensity score parameter estimates.
 #' @param ps.controls A list object. Any user specified inputs to
-#'   `ps.method`
+#'   SuperLearner::SuperLearner().
 #'
 #' @returns A list object containing `ptb` a matrix of the estimated parameters
 #'   for each perturbation and `Shat.rw.psihat.rt` a matrix of the estimated
@@ -143,9 +129,9 @@
                              sieve.degree,
                              outcome.type,
                              mainName, contName,
-                             outcome.method, outcome.controls,
+                             outcome.controls,
                              psName,
-                             ps.method, ps.controls) {
+                             ps.controls) {
 
   stopifnot(
     "`data.rct` must be provided" = !missing(data.rct),
@@ -157,10 +143,8 @@
     "`outcome.type` must be provided" = !missing(outcome.type),
     "`mainName` must be provided" = !missing(mainName),
     "`contName` must be provided" = !missing(contName),
-    "`outcome.method` must be provided" = !missing(outcome.method),
     "`outcome.controls` must be provided" = !missing(outcome.controls),
     "`psName` must be provided" = !missing(psName),
-    "`ps.method` must be provided" = !missing(ps.method),
     "`ps.controls` must be provided" = !missing(ps.controls)
   )
 
@@ -171,12 +155,12 @@
                                           sieve.degree = sieve.degree,
                                           outcome.type = outcome.type,
                                           mainName = mainName, contName = contName,
-                                          outcome.method = outcome.method,
                                           outcome.controls = outcome.controls,
                                           psName = psName,
-                                          ps.method = ps.method,
                                           ps.controls = ps.controls)
+
   }
+
   res <- do.call(rbind, res)
 
   list("ptb" = do.call(rbind, res[, "psi"]),
@@ -203,6 +187,7 @@
   ptb_eff <- ptb[, eff_columns, drop = FALSE]
   colnames(ptb_eff) <- strsplit(colnames(ptb_eff), ".", fixed = TRUE) |>
     lapply(utils::tail, n = -1L) |> lapply(paste, collapse = ".")
+
   V_eff <- {stats::var(ptb_eff, na.rm = TRUE) * n.rwe} |> matrix(ncol = sum(eff_columns))
 
   rt_columns <- grepl("rt.", colnames(ptb))
@@ -255,17 +240,11 @@
 #'   interact with the treatment variable (~ A:contName); an intercept is always
 #'   included, such that ~A is the minimal model; though it is not recommended,
 #'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain outcome model parameter estimates.
 #' @param outcome.controls A list object. Any user specified inputs to
-#'   `outcome.method`
+#'   SuperLearner::SuperLearner().
 #' @param psName A character vector. The covariates of the propensity model.
-#' @param ps.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain propensity score parameter estimates.
 #' @param ps.controls A list object. Any user specified inputs to
-#'   `ps.method`
+#'   SuperLearner::SuperLearner().
 #'
 #' @returns A list object containing
 #'   \begin{itemize}
@@ -285,9 +264,9 @@
                                    sieve.degree,
                                    outcome.type,
                                    mainName, contName,
-                                   outcome.method, outcome.controls,
+                                   outcome.controls,
                                    psName,
-                                   ps.method, ps.controls) {
+                                   ps.controls) {
 
   stopifnot(
     "`data.rct` must be a list containing X" = !missing(data.rct) &&
@@ -303,10 +282,8 @@
     "`outcome.type` must be provided" = !missing(outcome.type),
     "`mainName` must be provided" = !missing(mainName),
     "`contName` must be provided" = !missing(contName),
-    "`outcome.method` must be provided" = !missing(outcome.method),
     "`outcome.controls` must be provided" = !missing(outcome.controls),
     "`psName` must be provided" = !missing(psName),
-    "`ps.method` must be provided" = !missing(ps.method),
     "`ps.controls` must be provided" = !missing(ps.controls)
   )
 
@@ -327,10 +304,8 @@
                                  sieve.degree = sieve.degree,
                                  outcome.type = outcome.type,
                                  mainName = mainName, contName = contName,
-                                 outcome.method = outcome.method,
                                  outcome.controls = outcome.controls,
                                  psName = psName,
-                                 ps.method = ps.method,
                                  ps.controls = ps.controls)
 
     Vee <- .computeV(ptb = pert_est$ptb, n.rwe = n_rwe)

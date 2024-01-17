@@ -136,8 +136,8 @@
   z2_samples <- mvtnorm::rmvnorm(n.gamma, mean = mu2, diag(n_cov)) # z2
 
   # ngen x p
-  n_eff_samples <- - z2_samples %*% sqrt.V.eff # accept
-  n_rt_samples <- z1_samples %*% sqrt.V.rt_eff + n_eff_samples  #rej
+  n_eff_samples <- - z2_samples %*% t(sqrt.V.eff) # accept
+  n_rt_samples <- z1_samples %*% t(sqrt.V.rt_eff) + n_eff_samples  #rej
 
   # ngen Z1^T Z1 for each ngen
   z1tz1 <- apply(z1_samples, MARGIN = 1L, FUN = crossprod)

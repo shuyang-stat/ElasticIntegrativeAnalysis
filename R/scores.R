@@ -78,7 +78,6 @@
   H <- {Y - mu0 - A * {eXpsi - 1.0} / {eXpsi + 1.0}} * {A - ps} * wgt
 
   c(mean(H), colMeans(X[, idx, drop = FALSE] * H)) |> unname()
-
 }
 
 #' The Evaluated Score Function
@@ -126,7 +125,7 @@
                   A = data$A,
                   wgt = data$q,
                   ps = data$ml.ps,
-                  mu0 = data$ml.mu0) / data$ml.sigma0
+                  mu0 = data$ml.mu0)
   } else {
     stop("unrecognized outcome type", call. = FALSE)
   }

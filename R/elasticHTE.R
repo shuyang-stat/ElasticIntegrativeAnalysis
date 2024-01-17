@@ -48,32 +48,26 @@
 #'   all pair-wise interactions.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
-#' @param outcome.method A character. The regression tool to be used for
-#'   estimating the parameters of the outcome model. Must be one of
-#'   \{"glm", "sl"\} indicating the \code{stats::glm()} function or the
-#'   \code{SuperLearner::SuperLearner()} function.
-#' @param outcome.controls A named list. Additional inputs provided to the
-#'   outcome regression tool. Element names must match the formal arguments
-#'   of the chosen \code{outcome.method}. Should include, at a minimum, element
-#'   "family" indicating the error distribution. Please see documentation
-#'   of the selected regression tool for additional input options.
-#'   For \code{outcome.method = "glm"}, formal arguments \code{formula},
-#'   \code{data}, \code{weights}, and \code{subset} are set internally.
-#'   And for \code{outcome.method = "sl"}, formal arguments \code{Y},
-#'   \code{X}, \code{newX}, and  \code{obsWeight} are set internally.
-#' @param ps.method A character. The regression tool to be used for
-#'   estimating the parameters of the propensity score model. Must be one of
-#'   \{"glm", "sl"\} indicating the \code{stats::glm()} function or the
-#'   \code{SuperLearner::SuperLearner()} function.
-#' @param ps.controls A named list. Additional inputs provided to the
-#'   propensity score regression tool. Element names must match the formal
-#'   arguments of the chosen \code{ps.method}. Should include, at a minimum, element
-#'   "family" indicating the error distribution. Please see documentation
-#'   of the selected regression tool for additional input options.
-#'   For \code{ps.method = "glm"}, formal arguments \code{formula},
-#'   \code{data}, \code{weights}, and \code{subset} are set internally.
-#'   And for \code{ps.method = "sl"}, formal arguments \code{Y},
-#'   \code{X}, \code{newX}, and  \code{obsWeight} are set internally.
+#' @param outcome.controls A named list. Additional inputs provided to
+#'   \code{SuperLearner::SuperLearner()} for the outcome regression analyses.
+#'   Element names must match the formal arguments of
+#'   \code{SuperLearner::SuperLearner()} and should include, at a minimum,
+#'   elements "family" (specifying the error distribution) and
+#'   "SL.library" (specifying the prediction algorithms). Please see documentation
+#'   of \code{SuperLearner::SuperLearner()} for additional input options.
+#'   Note that formal arguments \code{Y},
+#'   \code{X}, \code{newX}, and  \code{obsWeight} are set internally and
+#'   should not be provided here.
+#' @param ps.controls A named list. Additional inputs provided to
+#'   \code{SuperLearner::SuperLearner()} for the propensity score analyses.
+#'   Element names must match the formal arguments of
+#'   \code{SuperLearner::SuperLearner()} and should include, at a minimum,
+#'   elements "family" (specifying the error distribution) and
+#'   "SL.library" (specifying the prediction algorithms). Please see documentation
+#'   of \code{SuperLearner::SuperLearner()} for additional input options.
+#'   Note that formal arguments \code{Y},
+#'   \code{X}, \code{newX}, and  \code{obsWeight} are set internally and
+#'   should not be provided here.
 #' @param fixed A logical. How to select the tuning parameter
 #'   \eqn{c_{\gamma}}{c_gamma}. FALSE, the default, selects an adaptive
 #'   selection strategy; TRUE selects a fixed threshold strategy.
@@ -109,43 +103,21 @@
 #' data("elasticToy.cont")
 #'
 #' # conduct the elastic integrative analysis with defaults
+#' \dontrun{
 #' result.cont <- elasticHTE(data.rct = elasticToy.cont.rct,
 #'                           data.rwe = elasticToy.cont.rwe)
-#'
-#' # conduct the elastic integrative analysis using SuperLearner with
-#' # default controls
-#' \dontrun{
-#' result.cont.sl <- elasticHTE(data.rct = elasticToy.cont.rct,
-#'                              data.rwe = elasticToy.cont.rwe,
-#'                              outcome.method = "sl",
-#'                              outcome.control = list("family" = gaussian(),
-#'                                                     "SL.library" = "SL.glm"),
-#'                              ps.method = "sl",
-#'                              ps.control = list("family" = binomial(),
-#'                                                "SL.library" = "SL.glm"))
 #' }
 #' # load provided illustrative toy dataset with binary outcome
 #' data("elasticToy.bin")
 #'
 #' # conduct the elastic integrative analysis with defaults
+#' \dontrun{
 #' result.bin <- elasticHTE(data.rct = elasticToy.bin.rct,
 #'                          data.rwe = elasticToy.bin.rwe,
 #'                          outcome.type = "bin",
 #'                          outcome.controls = list("family" = "quasibinomial"))
-#'
-#' # conduct the elastic integrative analysis using SuperLearning with
-#' # default controls
-#' \dontrun{
-#' result.bin.sl <- elasticHTE(data.rct = elasticToy.bin.rct,
-#'                             data.rwe = elasticToy.bin.rwe,
-#'                             outcome.type = "bin",
-#'                             outcome.method = "sl",
-#'                             outcome.controls = list("family" = "quasibinomial",
-#'                                                "SL.library" = "SL.glm"),
-#'                             ps.method = "sl",
-#'                             ps.control = list("family" = binomial(),
-#'                                                "SL.library" = "SL.glm"))
 #' }
+#'
 #' @importFrom stats complete.cases
 #' @include bias.R bootFunc.R cGamma.R perturbationEst.R psiEst.R
 #' @include sigma_matrices.R stopTests.R utils.R
@@ -158,18 +130,16 @@ elasticHTE <- function(data.rct,
                        thres.psi = NULL,
                        sieve.degree = 2L,
                        outcome.type = c("cont", "bin"),
-                       outcome.method = c("glm", "sl"),
-                       outcome.controls = list("family" = "gaussian"),
-                       ps.method = c("glm", "sl"),
-                       ps.controls = list("family" = "quasibinomial"),
+                       outcome.controls = list("family" = "gaussian",
+                                               "SL.library" = "SL.glm"),
+                       ps.controls = list("family" = "quasibinomial",
+                                          "SL.library" = "SL.glm"),
                        fixed = FALSE,
                        n.pert = 100L,
                        n.boot = 100L,
                        n.gamma = 1000L) {
 
   outcome.type <- match.arg(outcome.type)
-  outcome.method <- match.arg(outcome.method)
-  ps.method <- match.arg(ps.method)
 
   stopifnot(
     "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'" =
@@ -199,14 +169,10 @@ elasticHTE <- function(data.rct,
       isTRUE(all.equal(sieve.degree, round(sieve.degree, 0L))) && sieve.degree > 1,
     "`outcome.type` must be one of {'cont', 'bin'}" = .isCharacterVector(outcome.type, 1L) &&
       outcome.type %in% c("cont", "bin"),
-    "`outcome.method` must be one of {'glm', 'sl'}" = .isCharacterVector(outcome.method, 1L) &&
-      outcome.method %in% c("glm", "sl"),
     "`outcome.controls` must be a named list" = is.list(outcome.controls) &&
       {{length(outcome.controls) > 0L && !is.null(names(outcome.controls)) &&
           !any(nchar(names(outcome.controls)) == 0L)} ||
        {length(outcome.controls) == 0L}},
-    "`ps.method` must be one of {'glm', 'sl'}" = .isCharacterVector(ps.method, 1L) &&
-      ps.method %in% c("glm", "sl"),
     "`ps.controls` must be a named list" = is.list(ps.controls) &&
       {{length(ps.controls) > 0L && !is.null(names(ps.controls)) &&
           !any(nchar(names(ps.controls)) == 0L)} ||
@@ -219,6 +185,16 @@ elasticHTE <- function(data.rct,
     "`n.gamma` must be a positive integer" = .isNumericVector(n.gamma, 1L) &&
       isTRUE(all.equal(n.gamma, round(n.gamma, 0L))) && n.gamma > 0
   )
+
+  if (is.null(outcome.controls$family)) {
+    outcome.controls$family <- switch(outcome.type,
+                                      "cont" = "gaussian",
+                                      "bin" = "quasibinomial")
+  }
+  if (is.null(outcome.controls$SL.library)) outcome.controls$SL.library <- "SL.glm"
+
+  if (is.null(ps.controls$family)) ps.controls$family <- "quasibinomial"
+  if (is.null(ps.controls$SL.library)) ps.controls$SL.library <-"SL.glm"
 
   # NULL input means "all covariates in X"; integer input means "intercept only"
   mainName <- .adjustModelCoding(mainName, colnames(data.rct$X))
@@ -343,10 +319,8 @@ elasticHTE <- function(data.rct,
                       sieve.degree = sieve.degree,
                       outcome.type = outcome.type,
                       mainName = mainName, contName = contName,
-                      outcome.method = outcome.method,
                       outcome.controls = outcome.controls,
                       psName = psName,
-                      ps.method = ps.method,
                       ps.controls = ps.controls)
 
   ### Variance estimation using resampling
@@ -360,10 +334,8 @@ elasticHTE <- function(data.rct,
                                         sieve.degree = sieve.degree,
                                         outcome.type = outcome.type,
                                         mainName = mainName, contName = contName,
-                                        outcome.method = outcome.method,
                                         outcome.controls = outcome.controls,
                                         psName = psName,
-                                        ps.method = ps.method,
                                         ps.controls = ps.controls)
 
   # a list object is returned with elements inv.Sigma.SS, sqrt.inv.Sigma.SS,

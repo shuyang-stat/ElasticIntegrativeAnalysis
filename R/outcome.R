@@ -8,11 +8,9 @@
 #' @param wgt A numeric vector object.
 #' @param sieve.degree A scalar numeric object. The degree of the polynomial
 #'   used to define the sieve model.
-#' @param method A character object. The regression method. Must be one of
-#'   'glm' or 'sl.
-#' @param method.controls A list object. User specified inputs to the
-#'   regression method. Element names must match formal arguments of the
-#'   regression method.
+#' @param method.controls A list object. User specified inputs to
+#'   SuperLearner::SuperLearner(). Element names must match formal arguments of
+#'   SuperLearner::SuperLearner().
 #'
 #' @returns A list with elements mu0, ml.mu0, ml.mu1, and ml.sigma0,
 #'   which are the predicted outcome for all participants using
@@ -23,7 +21,7 @@
 #'
 #' @importFrom stats glm predict.glm
 #' @keywords internal
-.outcome <- function(X, Y, A, wgt, sieve.degree, method, method.controls) {
+.outcome <- function(X, Y, A, wgt, sieve.degree, method.controls) {
   stopifnot(
     "`X` must be a named numeric matrix" = !missing(X) &&
       {.isNamedNumericMatrix(X) || ncol(X) == 0L},
@@ -33,8 +31,6 @@
     "`wgt` must be a numeric vector" = !missing(wgt) && .isNumericVector(wgt, nrow(X)),
     "`sieve.degree` must be a scalar numeric" = !missing(sieve.degree) &&
       .isNumericVector(sieve.degree, 1L),
-    "`method` must be one of {'glm', 'sl'}" = !missing(method) &&
-      .isCharacterVector(method, 1L) && method %in% c("glm", "sl"),
     "`method.controls` must be a list" = !missing(method.controls) &&
       is.list(method.controls)
   )
@@ -48,7 +44,6 @@
     res$mu0 <- tryCatch(.sieveEstimator(X = X, Y = Y, wgt = wgt,
                                         sieve.degree = 1L,
                                         subset = subset,
-                                        method = method,
                                         method.controls = method.controls),
                         error = function(e) {
                           stop("unable to fit outcome model\n\t",
@@ -58,7 +53,6 @@
     res$ml.mu0 <- tryCatch(.sieveEstimator(X = X, Y = Y, wgt = wgt,
                                            sieve.degree = sieve.degree,
                                            subset = subset,
-                                           method = method,
                                            method.controls = method.controls),
                            error = function(e) {
                              stop("unable to fit outcome sieve model for subset A = 0\n\t",
@@ -77,7 +71,6 @@
     res$ml.mu1 <- tryCatch(.sieveEstimator(X = X, Y = Y, wgt = wgt,
                                            sieve.degree = sieve.degree,
                                            subset = !subset,
-                                           method = method,
                                            method.controls = method.controls),
                            error = function(e) {
                              stop("unable to fit outcome sieve model for subset A = 1\n\t",

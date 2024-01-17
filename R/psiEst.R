@@ -74,16 +74,10 @@
 #'   component of the outcome model.
 #' @param contName A character vector. The covariates of the contrasts
 #'   component of the outcome model.
-#' @param outcome.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain outcome model parameter estimates.
 #' @param outcome.controls A list object. Any user specified inputs to
-#'   `outcome.method`
-#' @param ps.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain psName score parameter estimates.
+#'   SuperLearner::SuperLearner().
 #' @param ps.controls A list object. Any user specified inputs to
-#'   `ps.method`
+#'   SuperLearner::SuperLearner()
 #' @param fit.name A character. Used to make error messages more informative.
 #'
 #' @returns A list. Elements $ps/$ml.ps contain the estimated psName scores
@@ -93,9 +87,9 @@
 #' @keywords internal
 .psiEstDataPrep <- function(data, sieve.degree,
                             mainName, contName,
-                            outcome.method, outcome.controls,
+                            outcome.controls,
                             psName,
-                            ps.method, ps.controls, fit.name) {
+                            ps.controls, fit.name) {
 
   stopifnot(
     "`data` must be a named list containing elements 'X', 'Y', 'A', 'q', and 'est.ps'" =
@@ -108,12 +102,10 @@
     "`contName` must be NULL or a character vector" = !missing(contName) &&
       {is.null(contName) ||
           {.isCharacterVector(contName) && all(contName %in% colnames(data$X))}},
-    "`outcome.method` must be provided" = !missing(outcome.method),
     "`outcome.controls` must be provided" = !missing(outcome.controls),
     "`psName` must be NULL or a character vector" = !missing(psName) &&
       {is.null(psName) ||
           {.isCharacterVector(psName) && all(psName %in% colnames(data$X))}},
-    "`ps.method` must be provided" = !missing(ps.method),
     "`ps.controls` must be provided" = !missing(ps.controls),
     "`fit.name` must be a character object" = !missing(fit.name) &&
       .isCharacterVector(fit.name, 1L)
@@ -123,11 +115,11 @@
   # function returns a list containing elements $ps and $ml.ps
   if (data$est.ps) {
     if (length(unique(data$A)) > 1L) {
+
       ps <- tryCatch(.propensityScore(X = data$X[, psName, drop = FALSE],
                                       A = data$A,
                                       wgt = data$q,
                                       sieve.degree = sieve.degree,
-                                      method = ps.method,
                                       method.controls = ps.controls,
                                       models = c("ps", "ml.ps")),
                      error = function(e) {
@@ -154,11 +146,11 @@
   # outcome fitted values and dispersion
   # function returns a list containing elements $mu0, $ml.mu0, $ml.sigma0, and
   # $ml.mu1
+
   outcome <- tryCatch(.outcome(X = data$X[, mainName, drop = FALSE],
                                Y = data$Y,
                                A = data$A, wgt = data$q,
                                sieve.degree = sieve.degree,
-                               method = outcome.method,
                                method.controls = outcome.controls),
                       error = function(e) {
                         stop("unable to estimate parameters for ", fit.name, "\n\t",
@@ -197,16 +189,10 @@
 #'   interact with the treatment variable (~ A:contName); an intercept is always
 #'   included, such that ~A is the minimal model; though it is not recommended,
 #'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain outcome model parameter estimates.
 #' @param outcome.controls A list object. Any user specified inputs to
-#'   `outcome.method`
-#' @param ps.method A character object. Must be one of 'glm' or 'sl'
-#'   indicating if stats::glm() or SuperLearner::SuperLearner() should be
-#'   used to obtain psName score parameter estimates.
+#'   SuperLearner::SuperLearner().
 #' @param ps.controls A list object. Any user specified inputs to
-#'   `ps.method`
+#'   SuperLearner::SuperLearner().
 #'
 #' @returns A list. Element $psi is a 4 x {p+1} matrix containing the
 #'   preliminary, efficient integrative and RCT estimators. Element
@@ -217,9 +203,9 @@
 .psiEst <- function(data.rct, data.rwe, sieve.degree,
                     outcome.type,
                     mainName, contName,
-                    outcome.method, outcome.controls,
+                    outcome.controls,
                     psName,
-                    ps.method, ps.controls) {
+                    ps.controls) {
 
   stopifnot(
     "`data.rct` must be a named list containing elements 'X', 'Y', 'A', 'q', and 'est.ps'" =
@@ -239,25 +225,22 @@
       {is.null(contName) ||
           {.isCharacterVector(contName) && all(contName %in% colnames(data.rct$X)) &&
           all(contName %in% colnames(data.rwe$X))}},
-    "`outcome.method` must be provided" = !missing(outcome.method),
     "`outcome.controls` must be provided" = !missing(outcome.controls),
     "`psName` must be NULL or a character vector" = !missing(psName) &&
       {is.null(psName) ||
           {.isCharacterVector(psName) && all(psName %in% colnames(data.rct$X)) &&
               all(psName %in% colnames(data.rwe$X))}},
-    "`ps.method` must be provided" = !missing(ps.method),
     "`ps.controls` must be provided" = !missing(ps.controls)
   )
 
   data.rwe$est.ps <- TRUE
+
   data.rwe <- .psiEstDataPrep(data = data.rwe,
                               sieve.degree = sieve.degree,
                               mainName = mainName,
                               contName = contName,
-                              outcome.method = outcome.method,
                               outcome.controls = outcome.controls,
                               psName = psName,
-                              ps.method = ps.method,
                               ps.controls = ps.controls,
                               fit.name = "RWE")
 
@@ -265,10 +248,8 @@
                               sieve.degree = sieve.degree,
                               mainName = mainName,
                               contName = contName,
-                              outcome.method = outcome.method,
                               outcome.controls = outcome.controls,
                               psName = psName,
-                              ps.method = ps.method,
                               ps.controls = ps.controls,
                               fit.name = "RCT")
 

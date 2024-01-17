@@ -7,18 +7,16 @@
 #' @param wgt A numeric vector object. An optional case weight.
 #' @param sieve.degree A scalar numeric object. The degree of the polynomial
 #'   used to define the sieve model.
-#' @param method A character object. The regression method. Must be one of
-#'   'glm' or 'sl.
-#' @param method.controls A list object. User specified inputs to the
-#'   regression method. Element names must match formal arguments of the
-#'   regression method.
+#' @param method.controls A list object. User specified inputs to
+#'   SuperLearner::SuperLearner(). Element names must match formal arguments of
+#'   SuperLearner::SuperLearner().
 #'
 #' @returns A list with elements "ps": the basic model estimates, and
 #'   "ml.ps": the sieve model estimates
 #'
 #' @include sieveEstimator.R
 #' @keywords internal
-.propensityScore <- function(X, A, wgt, sieve.degree, method, method.controls,
+.propensityScore <- function(X, A, wgt, sieve.degree, method.controls,
                              models) {
   stopifnot(
     "`X` must be a named numeric matrix" = !missing(X) &&
@@ -28,8 +26,6 @@
     "`wgt` must be a numeric vector" = !missing(wgt) && .isNumericVector(wgt, nrow(X)),
     "`sieve.degree` must be a scalar numeric" = !missing(sieve.degree) &&
       .isNumericVector(sieve.degree, 1L),
-    "`method` must be one of {'glm', 'sl'}" = !missing(method) &&
-      .isCharacterVector(method, 1L) && method %in% c("glm", "sl"),
     "`method.controls` must be a list" = !missing(method.controls) &&
       is.list(method.controls),
     "`models` can contain only {'ps', 'ml.ps'}" = !missing(models) &&
@@ -43,7 +39,6 @@
     res$ps <- tryCatch(.sieveEstimator(X = X, Y = A, wgt = wgt,
                                        subset = rep(TRUE, nrow(X)),
                                        sieve.degree = 1L,
-                                       method = method,
                                        method.controls = method.controls),
                        error = function(e) {
                          stop("unable to fit propensity score model\n\t",
@@ -55,7 +50,6 @@
     res$ml.ps <- tryCatch(.sieveEstimator(X = X, Y = A, wgt = wgt,
                                           subset = rep(TRUE, nrow(X)),
                                           sieve.degree = sieve.degree,
-                                          method = method,
                                           method.controls = method.controls),
                           error = function(e) {
                             stop("unable to fit sieve propensity score model\n\t",
