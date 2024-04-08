@@ -30,47 +30,11 @@ test_that("`.perturbationEstIteration()` returns expected errors", {
 
     expect_error(.perturbationEstIteration(data.rct = data.rct,
                                            data.rwe = data.rwe),
-                 "`sieve.degree` must be provided")
-    expect_error(.perturbationEstIteration(data.rct = data.rct,
-                                           data.rwe = data.rwe,
-                                           sieve.degree = 2L),
                  "`outcome.type` must be provided")
     expect_error(.perturbationEstIteration(data.rct = data.rct,
                                            data.rwe = data.rwe,
-                                           sieve.degree = 2L,
                                            outcome.type = "bin"),
-                 "`mainName` must be provided")
-    expect_error(.perturbationEstIteration(data.rct = data.rct,
-                                           data.rwe = data.rwe,
-                                           sieve.degree = 2L,
-                                           outcome.type = "bin",
-                                           mainName = "X1"),
-                 "`contName` must be provided")
-    expect_error(.perturbationEstIteration(data.rct = data.rct,
-                                           data.rwe = data.rwe,
-                                           sieve.degree = 2L,
-                                           outcome.type = "bin",
-                                           mainName = "X1",
-                                           contName = "X2"),
-                 "`outcome.controls` must be provided")
-    expect_error(.perturbationEstIteration(data.rct = data.rct,
-                                           data.rwe = data.rwe,
-                                           sieve.degree = 2L,
-                                           outcome.type = "bin",
-                                           mainName = "X1",
-                                           contName = "X2",
-                                           outcome.controls = list("family" = binomial())),
-                 "`psName` must be provided")
-    expect_error(.perturbationEstIteration(data.rct = data.rct,
-                                           data.rwe = data.rwe,
-                                           sieve.degree = 2L,
-                                           outcome.type = "bin",
-                                           mainName = "X1",
-                                           contName = "X2",
-                                           outcome.controls = list("family" = binomial()),
-                                           psName = "X2"),
-                 "`ps.controls` must be provided")
-
+                 "`models` must be provided")
 })
 
 test_that("`.perturbationEstIteration()` returns expected results", {
@@ -93,13 +57,19 @@ test_that("`.perturbationEstIteration()` returns expected results", {
     data.rwe$q <- stats::rexp(nrow(data.rwe$X))
   })
 
+  models <- list("RCT" = list("ME" = c("X1", "X2"),
+                              "PS" = c("X1", "X2", "X3")),
+                 "RWE" = list("ME" = c("X1"),
+                              "PS" = c("X1", "X2")),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2", "X3"))
+
   psi_list_p <- .psiEst(data.rct = data.rct, data.rwe = data.rwe,
-                        sieve.degree = 2L,
-                        outcome.type = "cont",
-                        mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                        outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                        psName = c("X1", "X2", "X3"),
-                        ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm"))
+                        outcome.type = "cont", models = models)
   rownms <- rownames(psi_list_p$psi)
   colnms <- colnames(psi_list_p$psi)
   nms <- NULL
@@ -113,21 +83,14 @@ test_that("`.perturbationEstIteration()` returns expected results", {
   names(values) <- nms
   psi_list_p$psi <- values
 
-  data.rct$q <- rep(1, n)
-  data.rwe$q <- rep(1, n)
+  data.rct$q <- rep(1.0, n)
+  data.rwe$q <- rep(1.0, n)
 
   expect_equal(withr::with_seed(2345L,
                                 .perturbationEstIteration(data.rwe = data.rwe,
                                                           data.rct = data.rct,
-                                                          sieve.degree = 2L,
                                                           outcome.type = "cont",
-                                                          mainName = c("X1", "X2"),
-                                                          contName = c("X2", "X3"),
-                                                          outcome.controls = list("family" = "gaussian",
-                                                                                  "SL.library" = "SL.glm"),
-                                                          psName = c("X1", "X2", "X3"),
-                                                          ps.controls = list("family" = "quasibinomial",
-                                                                             "SL.library" = "SL.glm"))),
+                                                          models = models)),
                psi_list_p)
 
 })
@@ -135,11 +98,11 @@ test_that("`.perturbationEstIteration()` returns expected results", {
 test_that("`.perturbationEstIteration()` returns expected results; one covariate", {
 
   n <- 1000L
-  p <- 1L
+  p <- 3L
 
   withr::with_seed(1234L, {
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
-                                  dimnames = list(NULL, "X1")),
+                                  dimnames = list(NULL, c("X1", "X2", "X3"))),
                      "Y" = stats::rnorm(n, 1),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
@@ -152,15 +115,20 @@ test_that("`.perturbationEstIteration()` returns expected results; one covariate
     data.rwe$q <- stats::rexp(nrow(data.rwe$X))
   })
 
+  models <- list("RCT" = list("ME" = c("X1"),
+                              "PS" = c("X3")),
+                 "RWE" = list("ME" = c("X2"),
+                              "PS" = c("X1")),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2"))
+
   psi_list_p <- .psiEst(data.rct = data.rct, data.rwe = data.rwe,
-                        sieve.degree = 2L,
                         outcome.type = "cont",
-                        mainName = c("X1"), contName = c("X1"),
-                        outcome.controls = list("family" = "gaussian",
-                                                "SL.library" = "SL.glm"),
-                        psName = c("X1"),
-                        ps.controls = list("family" = "quasibinomial",
-                                           "SL.library" = "SL.glm"))
+                        models = models)
   rownms <- rownames(psi_list_p$psi)
   colnms <- colnames(psi_list_p$psi)
   nms <- NULL
@@ -180,14 +148,8 @@ test_that("`.perturbationEstIteration()` returns expected results; one covariate
   expect_equal(withr::with_seed(2345L,
                                 .perturbationEstIteration(data.rwe = data.rwe,
                                                           data.rct = data.rct,
-                                                          sieve.degree = 2L,
                                                           outcome.type = "cont",
-                                                          mainName = c("X1"), contName = c("X1"),
-                                                          outcome.controls = list("family" = "gaussian",
-                                                                                  "SL.library" = "SL.glm"),
-                                                          psName = c("X1"),
-                                                          ps.controls = list("family" = "quasibinomial",
-                                                                             "SL.library" = "SL.glm"))),
+                                                          models = models)),
                psi_list_p)
 
 })
@@ -210,15 +172,22 @@ test_that("`.perturbationEstIteration()` returns expected results; no covariates
     data.rwe$q <- stats::rexp(nrow(data.rwe$X))
   })
 
+  models <- list("RCT" = list("ME" = NULL,
+                              "PS" = NULL),
+                 "RWE" = list("ME" = NULL,
+                              "PS" = NULL),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = NULL)
+
+
+
   psi_list_p <- .psiEst(data.rct = data.rct, data.rwe = data.rwe,
-                        sieve.degree = 2L,
                         outcome.type = "cont",
-                        mainName = NULL, contName = NULL,
-                        outcome.controls = list("family" = "gaussian",
-                                                "SL.library" = "SL.glm"),
-                        psName = NULL,
-                        ps.controls = list("family" = "quasibinomial",
-                                           "SL.library" = "SL.glm"))
+                        models = models)
   rownms <- rownames(psi_list_p$psi)
   colnms <- colnames(psi_list_p$psi)
   nms <- NULL
@@ -238,14 +207,8 @@ test_that("`.perturbationEstIteration()` returns expected results; no covariates
   expect_equal(withr::with_seed(2345L,
                                 .perturbationEstIteration(data.rwe = data.rwe,
                                                           data.rct = data.rct,
-                                                          sieve.degree = 2L,
                                                           outcome.type = "cont",
-                                                          mainName = NULL, contName = NULL,
-                                                          outcome.controls = list("family" = "gaussian",
-                                                                                  "SL.library" = "SL.glm"),
-                                                          psName = NULL,
-                                                          ps.controls = list("family" = "quasibinomial",
-                                                                             "SL.library" = "SL.glm"))),
+                                                          models = models)),
                psi_list_p)
 
 })
@@ -275,52 +238,12 @@ test_that("`.perturbationEst()` returns expected errors", {
     expect_error(.perturbationEst(data.rct = data.rct,
                                   data.rwe = data.rwe,
                                   n.pert = 100L),
-                 "`sieve.degree` must be provided")
-    expect_error(.perturbationEst(data.rct = data.rct,
-                                  data.rwe = data.rwe,
-                                  n.pert = 100L,
-                                  sieve.degree = 2L),
                  "`outcome.type` must be provided")
     expect_error(.perturbationEst(data.rct = data.rct,
                                   data.rwe = data.rwe,
                                   n.pert = 100L,
-                                  sieve.degree = 2L,
                                   outcome.type = "bin"),
-                 "`mainName` must be provided")
-    expect_error(.perturbationEst(data.rct = data.rct,
-                                  data.rwe = data.rwe,
-                                  n.pert = 100L,
-                                  sieve.degree = 2L,
-                                  outcome.type = "bin",
-                                  mainName = "X1"),
-                 "`contName` must be provided")
-    expect_error(.perturbationEst(data.rct = data.rct,
-                                  data.rwe = data.rwe,
-                                  n.pert = 100L,
-                                  sieve.degree = 2L,
-                                  outcome.type = "bin",
-                                  mainName = "X1",
-                                  contName = "X2"),
-                 "`outcome.controls` must be provided")
-    expect_error(.perturbationEst(data.rct = data.rct,
-                                  data.rwe = data.rwe,
-                                  n.pert = 100L,
-                                  sieve.degree = 2L,
-                                  outcome.type = "bin",
-                                  mainName = "X1",
-                                  contName = "X2",
-                                  outcome.controls = list("family" = binomial())),
-                 "`psName` must be provided")
-    expect_error(.perturbationEst(data.rct = data.rct,
-                                  data.rwe = data.rwe,
-                                  n.pert = 100L,
-                                  sieve.degree = 2L,
-                                  outcome.type = "bin",
-                                  mainName = "X1",
-                                  contName = "X2",
-                                  outcome.controls = list("family" = binomial()),
-                                  psName = "X2"),
-                 "`ps.controls` must be provided")
+                 "`models` must be provided")
 })
 
 test_that("`.perturbationEst()` returns expected results", {
@@ -340,18 +263,24 @@ test_that("`.perturbationEst()` returns expected results", {
 
   ptb <- NULL
   score <- NULL
+  models <- list("RCT" = list("ME" = c("X1", "X2"),
+                              "PS" = c("X1", "X2", "X3")),
+                 "RWE" = list("ME" = c("X2", "X3"),
+                              "PS" = c("X1", "X2")),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2", "X3"))
+
+
   withr::with_seed(2345L, {
     for (i in 1L:10L) {
       res <- .perturbationEstIteration(data.rwe = data.rwe,
                                        data.rct = data.rct,
-                                       sieve.degree = 2L,
                                        outcome.type = "cont",
-                                       mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                                       outcome.controls = list("family" = "gaussian",
-                                                               "SL.library" = "SL.glm"),
-                                       psName = c("X1", "X2", "X3"),
-                                       ps.controls = list("family" = "quasibinomial",
-                                                          "SL.library" = "SL.glm"))
+                                       models = models)
       ptb <- rbind(ptb, res$psi)
       score <- rbind(score, res$weighted.score)
     }
@@ -366,14 +295,8 @@ test_that("`.perturbationEst()` returns expected results", {
                                 .perturbationEst(data.rwe = data.rwe,
                                                  data.rct = data.rct,
                                                  n.pert = 10L,
-                                                 sieve.degree = 2L,
                                                  outcome.type = "cont",
-                                                 mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                                                 outcome.controls = list("family" = "gaussian",
-                                                                         "SL.library" = "SL.glm"),
-                                                 psName = c("X1", "X2", "X3"),
-                                                 ps.controls = list("family" = "quasibinomial",
-                                                                    "SL.library" = "SL.glm"))),
+                                                 models = models)),
                list("ptb" = ptb, "Shat.rw.psihat.rt" = score))
 
 })
@@ -381,11 +304,11 @@ test_that("`.perturbationEst()` returns expected results", {
 test_that("`.perturbationEst()` returns expected results; one covariate", {
 
   n <- 1000L
-  p <- 1L
+  p <- 3L
 
   withr::with_seed(1234L, {
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
-                                  dimnames = list(NULL, "X1")),
+                                  dimnames = list(NULL, c("X1", "X2", "X3"))),
                      "Y" = stats::rnorm(n, 1),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
@@ -393,20 +316,25 @@ test_that("`.perturbationEst()` returns expected results; one covariate", {
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
+  models <- list("RCT" = list("ME" = c("X1"),
+                              "PS" = c("X3")),
+                 "RWE" = list("ME" = c("X2"),
+                              "PS" = c("X1")),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2", "X3"))
+
   ptb <- NULL
   score <- NULL
   withr::with_seed(2345L, {
     for (i in 1L:10L) {
       res <- .perturbationEstIteration(data.rwe = data.rwe,
                                        data.rct = data.rct,
-                                       sieve.degree = 2L,
                                        outcome.type = "cont",
-                                       mainName = c("X1"), contName = c("X1"),
-                                       outcome.controls = list("family" = "gaussian",
-                                                               "SL.library" = "SL.glm"),
-                                       psName = c("X1"),
-                                       ps.controls = list("family" = "quasibinomial",
-                                                          "SL.library" = "SL.glm"))
+                                       models = models)
       ptb <- rbind(ptb, res$psi)
       score <- rbind(score, res$weighted.score)
     }
@@ -421,14 +349,8 @@ test_that("`.perturbationEst()` returns expected results; one covariate", {
                                 .perturbationEst(data.rwe = data.rwe,
                                                  data.rct = data.rct,
                                                  n.pert = 10L,
-                                                 sieve.degree = 2L,
                                                  outcome.type = "cont",
-                                                 mainName = c("X1"), contName = c("X1"),
-                                                 outcome.controls = list("family" = "gaussian",
-                                                                         "SL.library" = "SL.glm"),
-                                                 psName = c("X1"),
-                                                 ps.controls = list("family" = "quasibinomial",
-                                                                    "SL.library" = "SL.glm"))),
+                                                 models = models)),
                list("ptb" = ptb, "Shat.rw.psihat.rt" = score))
 
 })
@@ -446,20 +368,25 @@ test_that("`.perturbationEst()` returns expected results; no covariates", {
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
+  models <- list("RCT" = list("ME" = NULL,
+                              "PS" = NULL),
+                 "RWE" = list("ME" = NULL,
+                              "PS" = NULL),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = NULL)
+
   ptb <- NULL
   score <- NULL
   withr::with_seed(2345L, {
     for (i in 1L:10L) {
       res <- .perturbationEstIteration(data.rwe = data.rwe,
                                        data.rct = data.rct,
-                                       sieve.degree = 2L,
                                        outcome.type = "cont",
-                                       mainName = NULL, contName = NULL,
-                                       outcome.controls = list("family" = "gaussian",
-                                                               "SL.library" = "SL.glm"),
-                                       psName = NULL,
-                                       ps.controls = list("family" = "quasibinomial",
-                                                          "SL.library" = "SL.glm"))
+                                       models = models)
       ptb <- rbind(ptb, res$psi)
       score <- rbind(score, res$weighted.score)
     }
@@ -474,14 +401,8 @@ test_that("`.perturbationEst()` returns expected results; no covariates", {
                                 .perturbationEst(data.rwe = data.rwe,
                                                  data.rct = data.rct,
                                                  n.pert = 10L,
-                                                 sieve.degree = 2L,
                                                  outcome.type = "cont",
-                                                 mainName = NULL, contName = NULL,
-                                                 outcome.controls = list("family" = "gaussian",
-                                                                         "SL.library" = "SL.glm"),
-                                                 psName = NULL,
-                                                 ps.controls = list("family" = "quasibinomial",
-                                                                    "SL.library" = "SL.glm"))),
+                                                 models = models)),
                list("ptb" = ptb, "Shat.rw.psihat.rt" = score))
 
 })
@@ -562,53 +483,12 @@ test_that("`.perturbationProcedure()` returns expected errors", {
     expect_error(.perturbationProcedure(data.rct = data.rct,
                                         data.rwe = data.rwe,
                                         n.pert = 100L),
-                 "`sieve.degree` must be provided")
-    expect_error(.perturbationProcedure(data.rct = data.rct,
-                                        data.rwe = data.rwe,
-                                        n.pert = 100L,
-                                        sieve.degree = 2L),
                  "`outcome.type` must be provided")
     expect_error(.perturbationProcedure(data.rct = data.rct,
                                         data.rwe = data.rwe,
                                         n.pert = 100L,
-                                        sieve.degree = 2L,
                                         outcome.type = "bin"),
-                 "`mainName` must be provided")
-    expect_error(.perturbationProcedure(data.rct = data.rct,
-                                        data.rwe = data.rwe,
-                                        n.pert = 100L,
-                                        sieve.degree = 2L,
-                                        outcome.type = "bin",
-                                        mainName = "X1"),
-                 "`contName` must be provided")
-    expect_error(.perturbationProcedure(data.rct = data.rct,
-                                        data.rwe = data.rwe,
-                                        n.pert = 100L,
-                                        sieve.degree = 2L,
-                                        outcome.type = "bin",
-                                        mainName = "X1",
-                                        contName = "X2"),
-                 "`outcome.controls` must be provided")
-    expect_error(.perturbationProcedure(data.rct = data.rct,
-                                        data.rwe = data.rwe,
-                                        n.pert = 100L,
-                                        sieve.degree = 2L,
-                                        outcome.type = "bin",
-                                        mainName = "X1",
-                                        contName = "X2",
-                                        outcome.controls = list("family" = binomial())),
-                 "`psName` must be provided")
-    expect_error(.perturbationProcedure(data.rct = data.rct,
-                                        data.rwe = data.rwe,
-                                        n.pert = 100L,
-                                        sieve.degree = 2L,
-                                        outcome.type = "bin",
-                                        mainName = "X1",
-                                        contName = "X2",
-                                        outcome.controls = list("family" = binomial()),
-                                        psName = "X2"),
-                 "`ps.controls` must be provided")
-
+                 "`models` must be a list with elements 'RWE', 'RCT', 'outcome', 'ps', 'sieve.degree', and 'contName'")
 })
 
 test_that("`.perturbationProcedure()` returns expected results", {
@@ -625,18 +505,24 @@ test_that("`.perturbationProcedure()` returns expected results", {
   })
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
+  models <- list("RCT" = list("ME" = c("X1", "X2"),
+                              "PS" = c("X1", "X2", "X3")),
+                 "RWE" = list("ME" = c("X1"),
+                              "PS" = c("X1", "X2")),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2", "X3"))
+
 
   pert_est <- withr::with_seed(3456L,
                                .perturbationEst(data.rwe = data.rwe,
                                                 data.rct = data.rct,
                                                 n.pert = 10L,
-                                                sieve.degree = 2L,
                                                 outcome.type = "cont",
-                                                mainName = c("X1", "X2"),
-                                                contName = c("X2", "X3"),
-                                                outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                                                psName = c("X1", "X2", "X3"),
-                                                ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm")))
+                                                models = models))
 
   Vee <- .computeV(ptb = pert_est$ptb, n.rwe = n)
 
@@ -662,13 +548,8 @@ test_that("`.perturbationProcedure()` returns expected results", {
     .perturbationProcedure(data.rwe = data.rwe,
                            data.rct = data.rct,
                            n.pert = 10L,
-                           sieve.degree = 2L,
                            outcome.type = "cont",
-                           mainName = c("X1", "X2"),
-                           contName = c("X2", "X3"),
-                           outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                           psName = c("X1", "X2", "X3"),
-                           ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm"))),
+                           models = models)),
     expected)
 
 
@@ -677,11 +558,11 @@ test_that("`.perturbationProcedure()` returns expected results", {
 test_that("`.perturbationProcedure()` returns expected results; one covariate", {
 
   n <- 1000L
-  p <- 1L
+  p <- 3L
 
   withr::with_seed(2345L, {
     data.rct <- list("X" = matrix(stats::rnorm(n*p), n, p,
-                                  dimnames = list(NULL, "X1")),
+                                  dimnames = list(NULL, c("X1", "X2", "X3"))),
                      "Y" = stats::rnorm(n, 2),
                      "A" = stats::rbinom(n, 1, 0.5),
                      "q" = rep(1, n))
@@ -689,17 +570,23 @@ test_that("`.perturbationProcedure()` returns expected results; one covariate", 
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
+  models <- list("RCT" = list("ME" = c("X1"),
+                              "PS" = c("X3")),
+                 "RWE" = list("ME" = c("X2"),
+                              "PS" = c("X1")),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2"))
+
   pert_est <- withr::with_seed(3456L,
                                .perturbationEst(data.rwe = data.rwe,
                                                 data.rct = data.rct,
                                                 n.pert = 10L,
-                                                sieve.degree = 2L,
                                                 outcome.type = "cont",
-                                                mainName = c("X1"),
-                                                contName = c("X1"),
-                                                outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                                                psName = c("X1"),
-                                                ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm")))
+                                                models = models))
 
   Vee <- .computeV(ptb = pert_est$ptb, n.rwe = n)
 
@@ -712,7 +599,7 @@ test_that("`.perturbationProcedure()` returns expected results; one covariate", 
     lapply("[", 1L) |> unlist() |> unique()
 
   eta <- colMeans(pert_est$Shat.rw.psihat.rt) * sqrt(n)
-  names(eta) <- c("(Intercept)", "X1")
+  names(eta) <- c("(Intercept)", "X2")
 
   expected <- list("V.est" = ve,
                    "eta" = eta,
@@ -725,13 +612,8 @@ test_that("`.perturbationProcedure()` returns expected results; one covariate", 
     .perturbationProcedure(data.rwe = data.rwe,
                            data.rct = data.rct,
                            n.pert = 10L,
-                           sieve.degree = 2L,
                            outcome.type = "cont",
-                           mainName = c("X1"),
-                           contName = c("X1"),
-                           outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                           psName = c("X1"),
-                           ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm"))),
+                           models = models)),
     expected)
 
 
@@ -750,17 +632,23 @@ test_that("`.perturbationProcedure()` returns expected results; no covariates", 
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
+  models <- list("RCT" = list("ME" = NULL,
+                              "PS" = NULL),
+                 "RWE" = list("ME" = NULL,
+                              "PS" = NULL),
+                 "outcome" = list("method" = "glm",
+                                  "controls" = list("family" = "gaussian")),
+                 "ps" = list("method" = "glm",
+                             "controls" = list("family" = "quasibinomial")),
+                 "sieve.degree" = 2L,
+                 "contName" = NULL)
+
   pert_est <- withr::with_seed(3456L,
                                .perturbationEst(data.rwe = data.rwe,
                                                 data.rct = data.rct,
                                                 n.pert = 10L,
-                                                sieve.degree = 2L,
                                                 outcome.type = "cont",
-                                                mainName = NULL,
-                                                contName = NULL,
-                                                outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                                                psName = NULL,
-                                                ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm")))
+                                                models = models))
 
   Vee <- .computeV(ptb = pert_est$ptb, n.rwe = n)
 
@@ -786,13 +674,8 @@ test_that("`.perturbationProcedure()` returns expected results; no covariates", 
     .perturbationProcedure(data.rwe = data.rwe,
                            data.rct = data.rct,
                            n.pert = 10L,
-                           sieve.degree = 2L,
                            outcome.type = "cont",
-                           mainName = NULL,
-                           contName = NULL,
-                           outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                           psName = NULL,
-                           ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm"))),
+                           models = models)),
     expected)
 
 
@@ -813,13 +696,8 @@ test_that("`.perturbationProcedure()` returns expected results; no covariates", 
                                .perturbationEst(data.rwe = data.rwe,
                                                 data.rct = data.rct,
                                                 n.pert = 10L,
-                                                sieve.degree = 2L,
                                                 outcome.type = "cont",
-                                                mainName = NULL,
-                                                contName = NULL,
-                                                outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                                                psName = NULL,
-                                                ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm")))
+                                                models = models))
 
   Vee <- .computeV(ptb = pert_est$ptb, n.rwe = n)
 
@@ -845,13 +723,8 @@ test_that("`.perturbationProcedure()` returns expected results; no covariates", 
     .perturbationProcedure(data.rwe = data.rwe,
                            data.rct = data.rct,
                            n.pert = 10L,
-                           sieve.degree = 2L,
                            outcome.type = "cont",
-                           mainName = NULL,
-                           contName = NULL,
-                           outcome.controls = list("family" = "gaussian", "SL.library" = "SL.glm"),
-                           psName = NULL,
-                           ps.controls = list("family" = "quasibinomial", "SL.library" = "SL.glm"))),
+                           models = models)),
     expected)
 
 })

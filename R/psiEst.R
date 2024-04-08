@@ -70,12 +70,13 @@
 #'   used to define the sieve model.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
-#' @param mainName A character vector. The covariates of the main effects
-#'   component of the outcome model.
-#' @param contName A character vector. The covariates of the contrasts
-#'   component of the outcome model.
+#' @param mainName NULL or character vector. The covariates of the
+#'   main effects component of the outcome model. If NULL,
+#'   the main effects model is an intercept only model.
 #' @param outcome.controls A list object. Any user specified inputs to
 #'   SuperLearner::SuperLearner().
+#' @param psName NULL or character vector. The covariates of the propensity
+#'   score. If NULL, the propensity score model is an intercept only model.
 #' @param ps.controls A list object. Any user specified inputs to
 #'   SuperLearner::SuperLearner()
 #' @param fit.name A character. Used to make error messages more informative.
@@ -86,9 +87,11 @@
 #' @include outcome.R propensityScore.R
 #' @keywords internal
 .psiEstDataPrep <- function(data, sieve.degree,
-                            mainName, contName,
+                            mainName,
+                            outcome.method,
                             outcome.controls,
                             psName,
+                            ps.method,
                             ps.controls, fit.name) {
 
   stopifnot(
@@ -99,13 +102,12 @@
     "`mainName` must be NULL or a character vector" = !missing(mainName) &&
       {is.null(mainName) ||
           {.isCharacterVector(mainName) && all(mainName %in% colnames(data$X))}},
-    "`contName` must be NULL or a character vector" = !missing(contName) &&
-      {is.null(contName) ||
-          {.isCharacterVector(contName) && all(contName %in% colnames(data$X))}},
+    "`outcome.method` must be provided" = !missing(outcome.method),
     "`outcome.controls` must be provided" = !missing(outcome.controls),
     "`psName` must be NULL or a character vector" = !missing(psName) &&
       {is.null(psName) ||
           {.isCharacterVector(psName) && all(psName %in% colnames(data$X))}},
+    "`ps.method` must be provided" = !missing(ps.method),
     "`ps.controls` must be provided" = !missing(ps.controls),
     "`fit.name` must be a character object" = !missing(fit.name) &&
       .isCharacterVector(fit.name, 1L)
@@ -115,11 +117,11 @@
   # function returns a list containing elements $ps and $ml.ps
   if (data$est.ps) {
     if (length(unique(data$A)) > 1L) {
-
       ps <- tryCatch(.propensityScore(X = data$X[, psName, drop = FALSE],
                                       A = data$A,
                                       wgt = data$q,
                                       sieve.degree = sieve.degree,
+                                      method = ps.method,
                                       method.controls = ps.controls,
                                       models = c("ps", "ml.ps")),
                      error = function(e) {
@@ -151,6 +153,7 @@
                                Y = data$Y,
                                A = data$A, wgt = data$q,
                                sieve.degree = sieve.degree,
+                               method = outcome.method,
                                method.controls = outcome.controls),
                       error = function(e) {
                         stop("unable to estimate parameters for ", fit.name, "\n\t",
@@ -172,27 +175,17 @@
 #'   for the RCT.
 #' @param data.rwe A named list object. Must contain {X, Y, A, q}. Data
 #'   for the RWE.
-#' @param sieve.degree A scalar numeric object. The degree of the polynomial
-#'   used to define the sieve model.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
-#' @param mainName NULL, character vector or an integer. The covariates of the
-#'   main effects component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note that an intercept is always
-#'   added; though it is not recommended, an intercept only model can be
-#'   specified as `mainName = 1`.
-#' @param contName NULL, character vector or an integer. The covariates of the
-#'   contrasts component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note these are the covariates that
-#'   interact with the treatment variable (~ A:contName); an intercept is always
-#'   included, such that ~A is the minimal model; though it is not recommended,
-#'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner().
-#' @param ps.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner().
+#' @param models A list. Must contain elements 'RCT', a list containing the
+#'   main effects model (ME) and propensity score model (PS); 'RWE', a list
+#'   containing the main effects model (ME) and propensity score model (PS);
+#'   'contName' the variables of the treatment effect model; 'sieve.degree',
+#'   the degree of the Sieve estimator; 'outcome', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   outcome regression; and 'ps', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   propensity score regression
 #'
 #' @returns A list. Element $psi is a 4 x {p+1} matrix containing the
 #'   preliminary, efficient integrative and RCT estimators. Element
@@ -200,12 +193,7 @@
 #'
 #' @include outcome.R propensityScore.R
 #' @keywords internal
-.psiEst <- function(data.rct, data.rwe, sieve.degree,
-                    outcome.type,
-                    mainName, contName,
-                    outcome.controls,
-                    psName,
-                    ps.controls) {
+.psiEst <- function(data.rct, data.rwe, outcome.type, models) {
 
   stopifnot(
     "`data.rct` must be a named list containing elements 'X', 'Y', 'A', 'q', and 'est.ps'" =
@@ -214,43 +202,40 @@
     "`data.rwe` must be a named list containing elements 'X', 'Y', 'A', and 'q'" =
       !missing(data.rwe) && is.list(data.rwe) &&
       all(c("X", "Y", "A", "q") %in% names(data.rwe)),
-    "`sieve.degree` must be provided" = !missing(sieve.degree),
     "`outcome.type` must be one of 'cont' or 'bin'" = !missing(outcome.type) &&
       .isCharacterVector(outcome.type, 1L) && outcome.type %in% c("bin", "cont"),
-    "`mainName` must be NULL or a character vector" = !missing(mainName) &&
-      {is.null(mainName) ||
-      {.isCharacterVector(mainName) && all(mainName %in% colnames(data.rct$X)) &&
-          all(mainName %in% colnames(data.rwe$X))}},
-    "`contName` must be NULL or a character vector" = !missing(contName) &&
-      {is.null(contName) ||
-          {.isCharacterVector(contName) && all(contName %in% colnames(data.rct$X)) &&
-          all(contName %in% colnames(data.rwe$X))}},
-    "`outcome.controls` must be provided" = !missing(outcome.controls),
-    "`psName` must be NULL or a character vector" = !missing(psName) &&
-      {is.null(psName) ||
-          {.isCharacterVector(psName) && all(psName %in% colnames(data.rct$X)) &&
-              all(psName %in% colnames(data.rwe$X))}},
-    "`ps.controls` must be provided" = !missing(ps.controls)
+    "`models` must be a list with elements 'RWE', 'RCT', 'outcome', 'ps', 'sieve.degree', and 'contName'" =
+      !missing(models) && is.vector(models, mode = "list") &&
+      all(c("RWE", "RCT", "outcome", "ps", "sieve.degree", "contName") %in% names(models)),
+    "elements 'RWE' and 'RCT' of 'models' must be lists with elements 'ME' and 'PS'" =
+      is.vector(models$RWE, mode = "list") && is.vector(models$RCT, mode = "list") &&
+      all(c("ME", "PS") %in% names(models$RWE)) && all(c("ME", "PS") %in% names(models$RCT)),
+    "elements 'outcome' and 'ps' of 'models' must be lists with elements 'method' and 'controls'" =
+      is.vector(models$outcome, mode = "list") && is.vector(models$ps, mode = "list") &&
+      all(c("method", "controls") %in% names(models$outcome)) &&
+      all(c("method", "controls") %in% names(models$ps))
   )
 
   data.rwe$est.ps <- TRUE
 
   data.rwe <- .psiEstDataPrep(data = data.rwe,
-                              sieve.degree = sieve.degree,
-                              mainName = mainName,
-                              contName = contName,
-                              outcome.controls = outcome.controls,
-                              psName = psName,
-                              ps.controls = ps.controls,
+                              sieve.degree = models$sieve.degree,
+                              mainName = models$RWE$ME,
+                              outcome.method = models$outcome$method,
+                              outcome.controls = models$outcome$controls,
+                              psName = models$RWE$PS,
+                              ps.method = models$ps$method,
+                              ps.controls = models$ps$controls,
                               fit.name = "RWE")
 
   data.rct <- .psiEstDataPrep(data = data.rct,
-                              sieve.degree = sieve.degree,
-                              mainName = mainName,
-                              contName = contName,
-                              outcome.controls = outcome.controls,
-                              psName = psName,
-                              ps.controls = ps.controls,
+                              sieve.degree = models$sieve.degree,
+                              mainName = models$RCT$ME,
+                              outcome.method = models$outcome$method,
+                              outcome.controls = models$outcome$controls,
+                              psName = models$RCT$PS,
+                              ps.method = models$ps$method,
+                              ps.controls = models$ps$controls,
                               fit.name = "RCT")
 
   # ensure that the two lists are in the same order and combine
@@ -264,14 +249,14 @@
                          }
                        })
 
-  psi <- matrix(NA, nrow = 3, ncol = length(contName) + 1L,
+  psi <- matrix(NA, nrow = 3, ncol = length(models$contName) + 1L,
                 dimnames = c(list(c("p", "eff", "rt"),
-                                  c("(Intercept)", contName))))
+                                  c("(Intercept)", models$contName))))
 
-  par <- numeric(length(contName) + 1L)
-  names(par) <- c("(Intercept)", contName)
+  par <- numeric(length(models$contName) + 1L)
+  names(par) <- c("(Intercept)", models$contName)
 
-  psi["p", ] <- .rootsOfScore(X = data.integ$X[, contName, drop = FALSE],
+  psi["p", ] <- .rootsOfScore(X = data.integ$X[, models$contName, drop = FALSE],
                               Y = data.integ$Y,
                               A = data.integ$A,
                               wgt = data.integ$q,
@@ -282,7 +267,7 @@
                               outcome.type = outcome.type)
   par[] <- psi["p", ]
 
-  psi["eff", ] <- .rootsOfScore(X = data.integ$X[, contName, drop = FALSE],
+  psi["eff", ] <- .rootsOfScore(X = data.integ$X[, models$contName, drop = FALSE],
                                 Y = data.integ$Y,
                                 A = data.integ$A,
                                 wgt = data.integ$q,
@@ -292,7 +277,7 @@
                                 fit.name = "Efficient Integrative Estimator psi_eff",
                                 outcome.type = outcome.type)
 
-  psi["rt", ] <- .rootsOfScore(X = data.rct$X[, contName, drop = FALSE],
+  psi["rt", ] <- .rootsOfScore(X = data.rct$X[, models$contName, drop = FALSE],
                                Y = data.rct$Y,
                                A = data.rct$A,
                                wgt = data.rct$q,
@@ -305,7 +290,7 @@
   par[] <- psi["rt", ]
   weighted_score <- .evaluatedScore(data = data.rwe, psi = par,
                                     outcome.type = outcome.type,
-                                    contName = contName)
+                                    contName = models$contName)
 
   list("psi" = psi, "weighted.score" = weighted_score)
 }

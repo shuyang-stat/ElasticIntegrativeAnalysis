@@ -21,7 +21,7 @@
 #'
 #' @importFrom stats glm predict.glm
 #' @keywords internal
-.outcome <- function(X, Y, A, wgt, sieve.degree, method.controls) {
+.outcome <- function(X, Y, A, wgt, sieve.degree, method, method.controls) {
   stopifnot(
     "`X` must be a named numeric matrix" = !missing(X) &&
       {.isNamedNumericMatrix(X) || ncol(X) == 0L},
@@ -31,6 +31,7 @@
     "`wgt` must be a numeric vector" = !missing(wgt) && .isNumericVector(wgt, nrow(X)),
     "`sieve.degree` must be a scalar numeric" = !missing(sieve.degree) &&
       .isNumericVector(sieve.degree, 1L),
+    "`method` must be provided" = !missing(method),
     "`method.controls` must be a list" = !missing(method.controls) &&
       is.list(method.controls)
   )
@@ -44,6 +45,7 @@
     res$mu0 <- tryCatch(.sieveEstimator(X = X, Y = Y, wgt = wgt,
                                         sieve.degree = 1L,
                                         subset = subset,
+                                        method = method,
                                         method.controls = method.controls),
                         error = function(e) {
                           stop("unable to fit outcome model\n\t",
@@ -53,6 +55,7 @@
     res$ml.mu0 <- tryCatch(.sieveEstimator(X = X, Y = Y, wgt = wgt,
                                            sieve.degree = sieve.degree,
                                            subset = subset,
+                                           method = method,
                                            method.controls = method.controls),
                            error = function(e) {
                              stop("unable to fit outcome sieve model for subset A = 0\n\t",
@@ -71,6 +74,7 @@
     res$ml.mu1 <- tryCatch(.sieveEstimator(X = X, Y = Y, wgt = wgt,
                                            sieve.degree = sieve.degree,
                                            subset = !subset,
+                                           method = method,
                                            method.controls = method.controls),
                            error = function(e) {
                              stop("unable to fit outcome sieve model for subset A = 1\n\t",

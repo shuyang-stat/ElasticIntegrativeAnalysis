@@ -19,12 +19,19 @@
 #'   Element X is a numeric covariate matrix without an intercept.
 #'   Element Y is a binary or continuous response vector.
 #'   Element A is a binary treatment vector.
-#' @param mainName NULL, character vector, or an integer. The covariates of the
-#'   main effects component of the outcome model. If NULL, all covariates in
+#' @param ... Ignored. Included to require named inputs.
+#' @param mainName.rct NULL, character vector, or an integer. The covariates of the
+#'   main effects component of the outcome model for the RCT data. If NULL, all covariates in
 #'   \code{data.rct$X} specify the model; if a character vector, the column
 #'   headers of \code{data.rct$X} to include in the model. Note that an
 #'   intercept is always included in the model; though it is not recommended,
-#'   an intercept only main effects model can be specified as \code{mainName = 1}.
+#'   an intercept only main effects model can be specified as \code{mainName.rct = 1}.
+#' @param mainName.rwe NULL, character vector, or an integer. The covariates of the
+#'   main effects component of the outcome model for the RWE data. If NULL, all covariates in
+#'   \code{data.rwe$X} specify the model; if a character vector, the column
+#'   headers of \code{data.rwe$X} to include in the model. Note that an
+#'   intercept is always included in the model; though it is not recommended,
+#'   an intercept only main effects model can be specified as \code{mainName.rwe = 1}.
 #' @param contName NULL, character vector, or an integer. The covariates of the
 #'   contrasts component of the outcome model. If NULL, all covariates in
 #'   \code{data.rct$X}  specify the model; if a character vector, the column
@@ -33,12 +40,18 @@
 #'   intercept is always included, such that ~A is the minimal contrasts model;
 #'   though it is not recommended, an intercept only model can be specified as
 #'   \code{contName = 1}.
-#' @param psName NULL, character vector, or an integer. The covariates of the
-#'   the propensity score model. If NULL, all covariates in \code{data.rct$X}
+#' @param psName.rct NULL, character vector, or an integer. The covariates of the
+#'   the propensity score model for the RCT data. If NULL, all covariates in \code{data.rct$X}
 #'   specify the model; if a character vector, the column headers of
 #'   \code{data.rct$X} to include in the model. Note that an intercept is
 #'   always included in the model; an intercept only model can be specified as
-#'   \code{psName = 1}.
+#'   \code{psName.rct = 1}.
+#' @param psName.rwe NULL, character vector, or an integer. The covariates of the
+#'   the propensity score model for the RWE data. If NULL, all covariates in \code{data.rwe$X}
+#'   specify the model; if a character vector, the column headers of
+#'   \code{data.rwe$X} to include in the model. Note that an intercept is
+#'   always included in the model; an intercept only model can be specified as
+#'   \code{psName.rwe = 1}.
 #' @param thres.psi NULL or a scalar numeric. The threshold for constructing
 #'   adaptive confidence interval. STH QUESTION: Is there an allowed range we
 #'   should mention?
@@ -48,26 +61,32 @@
 #'   all pair-wise interactions.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
+#' @param outcome.method A character. The regression method for outcomes.
+#'   Must be one of \{'glm', 'SL'\}
 #' @param outcome.controls A named list. Additional inputs provided to
+#'   \code{stats::glm()} or
 #'   \code{SuperLearner::SuperLearner()} for the outcome regression analyses.
-#'   Element names must match the formal arguments of
+#'   Element names must match the formal arguments of \code{stats::glm()} or
 #'   \code{SuperLearner::SuperLearner()} and should include, at a minimum,
-#'   elements "family" (specifying the error distribution) and
-#'   "SL.library" (specifying the prediction algorithms). Please see documentation
-#'   of \code{SuperLearner::SuperLearner()} for additional input options.
-#'   Note that formal arguments \code{Y},
-#'   \code{X}, \code{newX}, and  \code{obsWeight} are set internally and
-#'   should not be provided here.
+#'   elements "family" (specifying the error distribution). Please see documentation
+#'   of \code{stats::glm()} or\code{SuperLearner::SuperLearner()} for additional
+#'   input options. Note that for \code{SuperLearner::SuperLearner()},
+#'   formal arguments \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} are
+#'   set internally and should not be provided here. Similarly, for \code{stats::glm()}
+#'   input \code{formula}, \code{data}, and \code{weights} cannot be set through input.
+#' @param ps.method A character. The regression method for propensity score
+#'   analysis. Must be one of \{'glm', 'SL'\}
 #' @param ps.controls A named list. Additional inputs provided to
-#'   \code{SuperLearner::SuperLearner()} for the propensity score analyses.
-#'   Element names must match the formal arguments of
+#'   \code{stats::glm()} or
+#'   \code{SuperLearner::SuperLearner()} for the outcome regression analyses.
+#'   Element names must match the formal arguments of \code{stats::glm()} or
 #'   \code{SuperLearner::SuperLearner()} and should include, at a minimum,
-#'   elements "family" (specifying the error distribution) and
-#'   "SL.library" (specifying the prediction algorithms). Please see documentation
-#'   of \code{SuperLearner::SuperLearner()} for additional input options.
-#'   Note that formal arguments \code{Y},
-#'   \code{X}, \code{newX}, and  \code{obsWeight} are set internally and
-#'   should not be provided here.
+#'   elements "family" (specifying the error distribution). Please see documentation
+#'   of \code{stats::glm()} or\code{SuperLearner::SuperLearner()} for additional
+#'   input options. Note that for \code{SuperLearner::SuperLearner()},
+#'   formal arguments \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} are
+#'   set internally and should not be provided here. Similarly, for \code{stats::glm()}
+#'   input \code{formula}, \code{data}, and \code{weights} cannot be set through input.
 #' @param fixed A logical. How to select the tuning parameter
 #'   \eqn{c_{\gamma}}{c_gamma}. FALSE, the default, selects an adaptive
 #'   selection strategy; TRUE selects a fixed threshold strategy.
@@ -114,8 +133,7 @@
 #' \dontrun{
 #' result.bin <- elasticHTE(data.rct = elasticToy.bin.rct,
 #'                          data.rwe = elasticToy.bin.rwe,
-#'                          outcome.type = "bin",
-#'                          outcome.controls = list("family" = "quasibinomial"))
+#'                          outcome.type = "bin")
 #' }
 #'
 #' @importFrom stats complete.cases
@@ -124,22 +142,29 @@
 #' @export
 elasticHTE <- function(data.rct,
                        data.rwe,
-                       mainName = NULL,
+                       ...,
+                       mainName.rct = NULL,
+                       mainName.rwe = mainName.rct,
                        contName = NULL,
-                       psName = NULL,
+                       psName.rct = NULL,
+                       psName.rwe = psName.rct,
                        thres.psi = NULL,
                        sieve.degree = 2L,
                        outcome.type = c("cont", "bin"),
-                       outcome.controls = list("family" = "gaussian",
-                                               "SL.library" = "SL.glm"),
-                       ps.controls = list("family" = "quasibinomial",
-                                          "SL.library" = "SL.glm"),
+                       outcome.method = c("glm", "SL"),
+                       outcome.controls = list("family" = "gaussian"),
+                       ps.method = c("glm", "SL"),
+                       ps.controls = list("family" = "quasibinomial"),
                        fixed = FALSE,
                        n.pert = 100L,
                        n.boot = 100L,
                        n.gamma = 1000L) {
 
   outcome.type <- match.arg(outcome.type)
+  outcome.method <- match.arg(outcome.method)
+  ps.method <- match.arg(ps.method)
+  mainName.rwe <- eval(mainName.rwe)
+  psName.rwe <- eval(psName.rwe)
 
   stopifnot(
     "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'" =
@@ -151,28 +176,34 @@ elasticHTE <- function(data.rct,
     "`data.rwe$X` and `data.rct$X` must be matrices with column names" =
       {.isNamedNumericMatrix(data.rwe$X) || ncol(data.rwe$X) == 0L} &&
       {.isNamedNumericMatrix(data.rct$X) || ncol(data.rwe$X) == 0L},
-    "`mainName` must be a character vector of X column headers" = is.null(mainName) ||
-      {.isNumericVector(mainName, 1L) && isTRUE(all.equal(mainName, 1))} ||
-      {.isCharacterVector(mainName) && all(mainName %in% colnames(data.rct$X)) &&
-       all(mainName %in% colnames(data.rwe$X))},
+    "`mainName.rct` must be a character vector of X column headers" = is.null(mainName.rct) ||
+      {.isNumericVector(mainName.rct, 1L) && isTRUE(all.equal(mainName.rct, 1))} ||
+      {.isCharacterVector(mainName.rct) && all(mainName.rct %in% colnames(data.rct$X))},
+    "`mainName.rwe` must be a character vector of X column headers" = is.null(mainName.rwe) ||
+      {.isNumericVector(mainName.rwe, 1L) && isTRUE(all.equal(mainName.rwe, 1))} ||
+      {.isCharacterVector(mainName.rwe) && all(mainName.rwe %in% colnames(data.rwe$X))},
     "`contName` must be a character vector of X column headers" = is.null(contName) ||
       {.isNumericVector(contName, 1L) && isTRUE(all.equal(contName, 1))} ||
       {.isCharacterVector(contName) && all(contName %in% colnames(data.rct$X)) &&
           all(contName %in% colnames(data.rwe$X))},
-    "`psName` must be a character vector of X column headers" = is.null(psName) ||
-      {.isNumericVector(psName, 1L) && isTRUE(all.equal(psName, 1))} ||
-      {.isCharacterVector(psName) && all(psName %in% colnames(data.rct$X)) &&
-          all(psName %in% colnames(data.rwe$X))},
+    "`psName.rct` must be a character vector of X column headers" = is.null(psName.rct) ||
+      {.isNumericVector(psName.rct, 1L) && isTRUE(all.equal(psName.rct, 1))} ||
+      {.isCharacterVector(psName.rct) && all(psName.rct %in% colnames(data.rct$X))},
+    "`psName.rwe` must be a character vector of X column headers" = is.null(psName.rwe) ||
+      {.isNumericVector(psName.rwe, 1L) && isTRUE(all.equal(psName.rwe, 1))} ||
+      {.isCharacterVector(psName.rwe) && all(psName.rwe %in% colnames(data.rwe$X))},
     "`thres.psi` must be a positive scalar" = is.null(thres.psi) ||
       {.isNumericVector(thres.psi, 1L) && thres.psi > 0.0},
     "`sieve.degree` must be a positive integer" = .isNumericVector(sieve.degree, 1L) &&
       isTRUE(all.equal(sieve.degree, round(sieve.degree, 0L))) && sieve.degree > 1,
     "`outcome.type` must be one of {'cont', 'bin'}" = .isCharacterVector(outcome.type, 1L) &&
       outcome.type %in% c("cont", "bin"),
+    # outcome.method is being tested by match.arg()
     "`outcome.controls` must be a named list" = is.list(outcome.controls) &&
       {{length(outcome.controls) > 0L && !is.null(names(outcome.controls)) &&
           !any(nchar(names(outcome.controls)) == 0L)} ||
        {length(outcome.controls) == 0L}},
+    # ps.method is being tested by match.arg()
     "`ps.controls` must be a named list" = is.list(ps.controls) &&
       {{length(ps.controls) > 0L && !is.null(names(ps.controls)) &&
           !any(nchar(names(ps.controls)) == 0L)} ||
@@ -191,40 +222,35 @@ elasticHTE <- function(data.rct,
                                       "cont" = "gaussian",
                                       "bin" = "quasibinomial")
   }
-  if (is.null(outcome.controls$SL.library)) outcome.controls$SL.library <- "SL.glm"
 
   if (is.null(ps.controls$family)) ps.controls$family <- "quasibinomial"
-  if (is.null(ps.controls$SL.library)) ps.controls$SL.library <-"SL.glm"
 
   # NULL input means "all covariates in X"; integer input means "intercept only"
-  mainName <- .adjustModelCoding(mainName, colnames(data.rct$X))
+  mainName.rct <- .adjustModelCoding(mainName.rct, colnames(data.rct$X))
+  mainName.rwe <- .adjustModelCoding(mainName.rwe, colnames(data.rwe$X))
   contName <- .adjustModelCoding(contName, colnames(data.rct$X))
-  psName <- .adjustModelCoding(psName, colnames(data.rct$X))
+  psName.rct <- .adjustModelCoding(psName.rct, colnames(data.rct$X))
+  psName.rwe <- .adjustModelCoding(psName.rwe, colnames(data.rwe$X))
 
   # reduce dataset down to only those covariates used in models
-  if (is.null(mainName) && is.null(contName) && is.null(psName)) {
+  if (is.null(mainName.rct) && is.null(contName) && is.null(psName.rct)) {
     data.rct$X <- matrix(NA, nrow(data.rct$X), 0L)
-    data.rwe$X <- matrix(NA, nrow(data.rwe$X), 0L)
-  } else {
-    all_cov <- unique(c(mainName, contName, psName))
+  } else if (!is.null(mainName.rct) || !is.null(contName) || !is.null(psName.rct)) {
+    all_cov <- unique(c(mainName.rct, contName, psName.rct))
 
-    if (!all(all_cov %in% colnames(data.rct$X)) ||
-        !all(all_cov %in% colnames(data.rwe$X))) {
+    if (!all(all_cov %in% colnames(data.rct$X))) {
       stop("not all model covariates are found in provided data\n\t",
            "model covariate: ", paste(all_cov, collapse = ", "), "\n\t",
-           "data.rct: ", paste(colnames(data.rct$X), collapse = ", "), "\n\t",
-           "data.rwe: " , paste(colnames(data.rwe$X), collapse = ", "), "\n\t", call. = FALSE)
+           "data.rct: ", paste(colnames(data.rct$X), collapse = ", "), "\n\t", call. = FALSE)
     }
 
     data.rct$X <- data.rct$X[, all_cov]
-    data.rwe$X <- data.rwe$X[, all_cov]
 
     # spaces in covariate names might cause issues later
     colnames(data.rct$X) <- .fixNames(colnames(data.rct$X))
-    colnames(data.rwe$X) <- .fixNames(colnames(data.rwe$X))
-    mainName <- .fixNames(mainName)
+    mainName.rct <- .fixNames(mainName.rct)
     contName <- .fixNames(contName)
-    psName <- .fixNames(psName)
+    psName.rct <- .fixNames(psName.rct)
 
     # if this introduces duplicate column headers, ask user to adjust column
     # headers themselves
@@ -232,7 +258,35 @@ elasticHTE <- function(data.rct,
       stop("duplicate column headers found in X, ",
            "possibly due to required removal of spaces ",
            "please eliminate spaces from column header names in `data.rct$X` ",
-           "and `data.rwe$X",
+           call. = FALSE)
+    }
+  }
+
+  if (is.null(mainName.rwe) && is.null(contName) && is.null(psName.rwe)) {
+    data.rwe$X <- matrix(NA, nrow(data.rwe$X), 0L)
+  } else if (!is.null(mainName.rwe) || !is.null(contName) || !is.null(psName.rwe)) {
+    all_cov <- unique(c(mainName.rwe, contName, psName.rwe))
+
+    if (!all(all_cov %in% colnames(data.rwe$X))) {
+      stop("not all model covariates are found in provided data\n\t",
+           "model covariate: ", paste(all_cov, collapse = ", "), "\n\t",
+           "data.rwe: ", paste(colnames(data.rwe$X), collapse = ", "), "\n\t", call. = FALSE)
+    }
+
+    data.rwe$X <- data.rwe$X[, all_cov]
+
+    # spaces in covariate names might cause issues later
+    colnames(data.rwe$X) <- .fixNames(colnames(data.rwe$X))
+    mainName.rwe <- .fixNames(mainName.rwe)
+    contName <- .fixNames(contName)
+    psName.rwe <- .fixNames(psName.rwe)
+
+    # if this introduces duplicate column headers, ask user to adjust column
+    # headers themselves
+    if (length(unique(colnames(data.rwe$X))) != ncol(data.rwe$X)) {
+      stop("duplicate column headers found in X, ",
+           "possibly due to required removal of spaces ",
+           "please eliminate spaces from column header names in `data.rwe$X` ",
            call. = FALSE)
     }
   }
@@ -313,15 +367,22 @@ elasticHTE <- function(data.rct,
   # if not provided set default threshold value
   if (is.null(thres.psi)) thres.psi <- n_rwe |> log() |> sqrt()
 
+  models <- list("RWE" = list("ME" = mainName.rwe,
+                              "PS" = psName.rwe),
+                 "RCT" = list("ME" = mainName.rct,
+                              "PS" = psName.rct),
+                 "contName" = contName,
+                 "outcome" = list("method" = outcome.method,
+                                  "controls" = outcome.controls),
+                 "ps" = list("method" = ps.method,
+                             "controls" = ps.controls),
+                 "sieve.degree" = sieve.degree)
+
   # a list object is returned with elements `psi` and `weighted.score`
   psi_list <- .psiEst(data.rwe = data.rwe,
                       data.rct = data.rct,
-                      sieve.degree = sieve.degree,
                       outcome.type = outcome.type,
-                      mainName = mainName, contName = contName,
-                      outcome.controls = outcome.controls,
-                      psName = psName,
-                      ps.controls = ps.controls)
+                      models = models)
 
   ### Variance estimation using resampling
 
@@ -331,12 +392,8 @@ elasticHTE <- function(data.rct,
   perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                         data.rct = data.rct,
                                         n.pert = n.pert,
-                                        sieve.degree = sieve.degree,
                                         outcome.type = outcome.type,
-                                        mainName = mainName, contName = contName,
-                                        outcome.controls = outcome.controls,
-                                        psName = psName,
-                                        ps.controls = ps.controls)
+                                        models = models)
 
   # a list object is returned with elements inv.Sigma.SS, sqrt.inv.Sigma.SS,
   # and sqrt.Sigma.SS each a p x p matrix

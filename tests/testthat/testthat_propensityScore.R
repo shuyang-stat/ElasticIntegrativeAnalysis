@@ -50,38 +50,50 @@ test_that("`.propensityScore()` returns expected errors", {
                "`sieve.degree` must be a scalar numeric")
 
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
-                               sieve.degree = 2L),
+                                sieve.degree = 2L),
+               "`method` must be provided")
+
+  expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
+                                method = "glm",
+                                sieve.degree = 2L),
                "`method.controls` must be a list")
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
-                               sieve.degree = 2L,
-                               method.controls = c("family" = "binomial")),
+                                method = "glm",
+                                sieve.degree = 2L,
+                                method.controls = c("family" = "binomial")),
                "`method.controls` must be a list")
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
-                               sieve.degree = 2L,
-                               method.controls = 1.0),
+                                sieve.degree = 2L,
+                                method = "glm",
+                                method.controls = 1.0),
                "`method.controls` must be a list")
 
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
                                 sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = list("family" = gaussian())),
                "`models` can contain only {'ps', 'ml.ps'}", fixed = TRUE)
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
                                 sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = list("family" = gaussian()),
                                 models = 1),
                "`models` can contain only {'ps', 'ml.ps'}", fixed = TRUE)
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
                                 sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = list("family" = gaussian()),
                                 models = "PS"),
                "`models` can contain only {'ps', 'ml.ps'}", fixed = TRUE)
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
                                 sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = list("family" = gaussian()),
                                 models = c("ps", "ml_ps")),
                "`models` can contain only {'ps', 'ml.ps'}", fixed = TRUE)
   expect_error(.propensityScore(X = X, A = rep(1L, 10L), wgt = rep(1.0, 10L),
                                 sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = list("family" = gaussian()),
                                 models = c("ps", "ml.ps", "ps")),
                "`models` can contain only {'ps', 'ml.ps'}", fixed = TRUE)
@@ -99,29 +111,34 @@ test_that("`.propensityScore()` returns the expected results", {
   A <- withr::with_seed(2345L, rbinom(n, 1, 0.4))
   wgt <- rep(1.0, n)
 
-  method.controls <- list("family" = binomial(), "SL.library" = "SL.glm")
+  method.controls <- list("family" = binomial())
 
   res <- list()
   res$ps <- .sieveEstimator(X = X, Y = A, wgt = wgt,
                             subset = rep(TRUE, nrow(X)),
                             sieve.degree = 1L,
+                            method = "glm",
                             method.controls = method.controls)
   res$ml.ps <- .sieveEstimator(X = X, Y = A, wgt = wgt,
                                subset = rep(TRUE, nrow(X)),
                                sieve.degree = 2L,
+                               method = "glm",
                                method.controls = method.controls)
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = method.controls,
                                 models = c("ps", "ml.ps")),
                res)
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = method.controls,
                                 models = c("ps")),
                list("ps" = res$ps))
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = method.controls,
                                 models = c("ml.ps")),
                list("ml.ps" = res$ml.ps))
@@ -136,29 +153,34 @@ test_that("`.propensityScore()` returns the expected results; single covariate",
   A <- withr::with_seed(2345L, rbinom(n, 1, 0.4))
   wgt <- rep(1.0, n)
 
-  method.controls <- list("family" = binomial(), "SL.library" = "SL.glm")
+  method.controls <- list("family" = binomial())
 
   res <- list()
   res$ps <- .sieveEstimator(X = X, Y = A, wgt = wgt,
                             subset = rep(TRUE, nrow(X)),
                             sieve.degree = 1L,
+                            method = "glm",
                             method.controls = method.controls)
   res$ml.ps <- .sieveEstimator(X = X, Y = A, wgt = wgt,
                                subset = rep(TRUE, nrow(X)),
                                sieve.degree = 2L,
+                               method = "glm",
                                method.controls = method.controls)
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = method.controls,
                                 models = c("ps", "ml.ps")),
                res)
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = method.controls,
                                 models = c("ps")),
                list("ps" = res$ps))
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
+                                method = "glm",
                                 method.controls = method.controls,
                                 models = c("ml.ps")),
                list("ml.ps" = res$ml.ps))
@@ -173,30 +195,35 @@ test_that("`.propensityScore()` returns the expected results; no covariate", {
   A <- withr::with_seed(2345L, rbinom(n, 1, 0.4))
   wgt <- rep(1.0, n)
 
-  method.controls <- list("family" = binomial(), "SL.library" = "SL.glm")
+  method.controls <- list("family" = binomial())
 
   res <- list()
   res$ps <- .sieveEstimator(X = X, Y = A, wgt = wgt,
                             subset = rep(TRUE, nrow(X)),
                             sieve.degree = 1L,
+                            method = "glm",
                             method.controls = method.controls)
   res$ml.ps <- .sieveEstimator(X = X, Y = A, wgt = wgt,
                                subset = rep(TRUE, nrow(X)),
                                sieve.degree = 2L,
+                               method = "glm",
                                method.controls = method.controls)
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
                                 method.controls = method.controls,
+                                method = "glm",
                                 models = c("ps", "ml.ps")),
                res)
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
                                 method.controls = method.controls,
+                                method = "glm",
                                 models = c("ps")),
                list("ps" = res$ps))
 
   expect_equal(.propensityScore(X = X, A = A, wgt = wgt, sieve.degree = 2L,
                                 method.controls = method.controls,
+                                method = "glm",
                                 models = c("ml.ps")),
                list("ml.ps" = res$ml.ps))
 })

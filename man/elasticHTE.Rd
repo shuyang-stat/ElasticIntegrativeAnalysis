@@ -9,14 +9,19 @@
 elasticHTE(
   data.rct,
   data.rwe,
-  mainName = NULL,
+  ...,
+  mainName.rct = NULL,
+  mainName.rwe = mainName.rct,
   contName = NULL,
-  psName = NULL,
+  psName.rct = NULL,
+  psName.rwe = psName.rct,
   thres.psi = NULL,
   sieve.degree = 2L,
   outcome.type = c("cont", "bin"),
-  outcome.controls = list(family = "gaussian", SL.library = "SL.glm"),
-  ps.controls = list(family = "quasibinomial", SL.library = "SL.glm"),
+  outcome.method = c("glm", "SL"),
+  outcome.controls = list(family = "gaussian"),
+  ps.method = c("glm", "SL"),
+  ps.controls = list(family = "quasibinomial"),
   fixed = FALSE,
   n.pert = 100L,
   n.boot = 100L,
@@ -40,12 +45,21 @@ Element X is a numeric covariate matrix without an intercept.
 Element Y is a binary or continuous response vector.
 Element A is a binary treatment vector.}
 
-\item{mainName}{NULL, character vector, or an integer. The covariates of the
-main effects component of the outcome model. If NULL, all covariates in
+\item{...}{Ignored}
+
+\item{mainName.rct}{NULL, character vector, or an integer. The covariates of the
+main effects component of the outcome model for the RCT data. If NULL, all covariates in
 \code{data.rct$X} specify the model; if a character vector, the column
 headers of \code{data.rct$X} to include in the model. Note that an
 intercept is always included in the model; though it is not recommended,
-an intercept only main effects model can be specified as \code{mainName = 1}.}
+an intercept only main effects model can be specified as \code{mainName.rct = 1}.}
+
+\item{mainName.rwe}{NULL, character vector, or an integer. The covariates of the
+main effects component of the outcome model for the RWE data. If NULL, all covariates in
+\code{data.rwe$X} specify the model; if a character vector, the column
+headers of \code{data.rwe$X} to include in the model. Note that an
+intercept is always included in the model; though it is not recommended,
+an intercept only main effects model can be specified as \code{mainName.rwe = 1}.}
 
 \item{contName}{NULL, character vector, or an integer. The covariates of the
 contrasts component of the outcome model. If NULL, all covariates in
@@ -56,12 +70,19 @@ intercept is always included, such that ~A is the minimal contrasts model;
 though it is not recommended, an intercept only model can be specified as
 \code{contName = 1}.}
 
-\item{psName}{NULL, character vector, or an integer. The covariates of the
-the propensity score model. If NULL, all covariates in \code{data.rct$X}
+\item{psName.rct}{NULL, character vector, or an integer. The covariates of the
+the propensity score model for the RCT data. If NULL, all covariates in \code{data.rct$X}
 specify the model; if a character vector, the column headers of
 \code{data.rct$X} to include in the model. Note that an intercept is
 always included in the model; an intercept only model can be specified as
-\code{psName = 1}.}
+\code{psName.rct = 1}.}
+
+\item{psName.rwe}{NULL, character vector, or an integer. The covariates of the
+the propensity score model for the RWE data. If NULL, all covariates in \code{data.rwe$X}
+specify the model; if a character vector, the column headers of
+\code{data.rwe$X} to include in the model. Note that an intercept is
+always included in the model; an intercept only model can be specified as
+\code{psName.rwe = 1}.}
 
 \item{thres.psi}{NULL or a scalar numeric. The threshold for constructing
 adaptive confidence interval. STH QUESTION: Is there an allowed range we
@@ -75,27 +96,35 @@ all pair-wise interactions.}
 \item{outcome.type}{A character. The type of outcome. Must be one of
 \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.}
 
+\item{outcome.method}{A character. The regression method for outcomes.
+Must be one of \{'glm', 'SL'\}}
+
 \item{outcome.controls}{A named list. Additional inputs provided to
+\code{stats::glm()} or
 \code{SuperLearner::SuperLearner()} for the outcome regression analyses.
-Element names must match the formal arguments of
+Element names must match the formal arguments of \code{stats::glm()} or
 \code{SuperLearner::SuperLearner()} and should include, at a minimum,
-elements "family" (specifying the error distribution) and
-"SL.library" (specifying the prediction algorithms). Please see documentation
-of \code{SuperLearner::SuperLearner()} for additional input options.
-Note that formal arguments \code{Y},
-\code{X}, \code{newX}, and  \code{obsWeight} are set internally and
-should not be provided here.}
+elements "family" (specifying the error distribution). Please see documentation
+of \code{stats::glm()} or\code{SuperLearner::SuperLearner()} for additional
+input options. Note that for \code{SuperLearner::SuperLearner()},
+formal arguments \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} are
+set internally and should not be provided here. Similarly, for \code{stats::glm()}
+input \code{formula}, \code{data}, and \code{weights} cannot be set through input.}
+
+\item{ps.method}{A character. The regression method for propensity score
+analysis. Must be one of \{'glm', 'SL'\}}
 
 \item{ps.controls}{A named list. Additional inputs provided to
-\code{SuperLearner::SuperLearner()} for the propensity score analyses.
-Element names must match the formal arguments of
+\code{stats::glm()} or
+\code{SuperLearner::SuperLearner()} for the outcome regression analyses.
+Element names must match the formal arguments of \code{stats::glm()} or
 \code{SuperLearner::SuperLearner()} and should include, at a minimum,
-elements "family" (specifying the error distribution) and
-"SL.library" (specifying the prediction algorithms). Please see documentation
-of \code{SuperLearner::SuperLearner()} for additional input options.
-Note that formal arguments \code{Y},
-\code{X}, \code{newX}, and  \code{obsWeight} are set internally and
-should not be provided here.}
+elements "family" (specifying the error distribution). Please see documentation
+of \code{stats::glm()} or\code{SuperLearner::SuperLearner()} for additional
+input options. Note that for \code{SuperLearner::SuperLearner()},
+formal arguments \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} are
+set internally and should not be provided here. Similarly, for \code{stats::glm()}
+input \code{formula}, \code{data}, and \code{weights} cannot be set through input.}
 
 \item{fixed}{A logical. How to select the tuning parameter
 \eqn{c_{\gamma}}{c_gamma}. FALSE, the default, selects an adaptive
@@ -113,8 +142,6 @@ when estimating the confidence intervals.}
 \eqn{c_{\gamma}}{c_gamma}, the threshold.}
 
 \item{x}{An object of S3 class \code{elasticHTE}.}
-
-\item{...}{Ignored}
 
 \item{object}{An object of S3 class \code{elasticHTE}.}
 }
@@ -170,8 +197,7 @@ data("elasticToy.bin")
 \dontrun{
 result.bin <- elasticHTE(data.rct = elasticToy.bin.rct,
                          data.rwe = elasticToy.bin.rwe,
-                         outcome.type = "bin",
-                         outcome.controls = list("family" = "quasibinomial"))
+                         outcome.type = "bin")
 }
 
 }

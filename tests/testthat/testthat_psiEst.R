@@ -197,73 +197,85 @@ test_that("`.psiEstDataPrep()` returns expected errors", {
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
                                mainName = mainName),
-               "`contName` must be NULL or a character vector")
-  expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = NA),
-               "`contName` must be NULL or a character vector")
-  expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = c("x1", "X2")),
-               "`contName` must be NULL or a character vector")
-  expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = matrix(c("X1", "X2"), 2, 1L)),
-               "`contName` must be NULL or a character vector")
-  contName <- c("X1", "X2", "X3")
+               "`outcome.method` must be provided")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName),
+                               mainName = mainName,
+                               outcome.method = "glm"),
                "`outcome.controls` must be provided")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list()),
                "`psName` must be NULL or a character vector")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = NA),
                "`psName` must be NULL or a character vector")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = c("x1", "X2")),
                "`psName` must be NULL or a character vector")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = matrix(c("X1", "X2"), 2, 1L)),
                "`psName` must be NULL or a character vector")
   psName <- c("X1", "X2", "X3")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = psName),
+               "`ps.method` must be provided")
+
+  expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
+                               mainName = mainName,
+                               outcome.method = "glm",
+                               outcome.controls = list(),
+                               psName = psName,
+                               ps.method = "glm"),
                "`ps.controls` must be provided")
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = psName,
+                               ps.method = "glm",
                                ps.controls = list()),
                "`fit.name` must be a character object")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = psName,
+                               ps.method = "glm",
                                ps.controls = list(),
                                fit.name = 1),
                "`fit.name` must be a character object")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = psName,
+                               ps.method = "glm",
                                ps.controls = list(),
                                fit.name = c("a", "b")),
                "`fit.name` must be a character object")
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 1,
-                               mainName = mainName, contName = contName,
+                               mainName = mainName,
+                               outcome.method = "glm",
                                outcome.controls = list(),
                                psName = psName,
+                               ps.method = "glm",
                                ps.controls = list(),
                                fit.name = matrix("a", nrow = 1L, ncol = 1L)),
                "`fit.name` must be a character object")
@@ -287,9 +299,11 @@ test_that("`psiEstDataPrep()` returns expected results", {
   data$est.ps <- FALSE
 
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 2,
-                               mainName = c("X1", "X2"), contName = c("X2", "X3"),
+                               mainName = c("X1", "X2"),
+                               outcome.method = "glm",
                                outcome.controls = list("family" = "gaussian"),
                                psName = c("X1", "X2", "X3"),
+                               ps.method = "glm",
                                ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                "ps must be provided for testing")
@@ -304,17 +318,17 @@ test_that("`psiEstDataPrep()` returns expected results", {
                       Y = data$Y,
                       A = data$A, wgt = data$q,
                       sieve.degree = 2L,
-                      method.controls = list("family" = gaussian(),
-                                             "SL.library" = "SL.glm"))
+                      method = "glm",
+                      method.controls = list("family" = gaussian()))
   expected[names(outcome)] <- outcome
 
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2,
-                               mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                               outcome.controls = list("family" = "gaussian",
-                                                       "SL.library" = "SL.glm"),
+                               mainName = c("X1", "X2"),
+                               outcome.method = "glm",
+                               outcome.controls = list("family" = "gaussian"),
                                psName = c("X1", "X2", "X3"),
-                               ps.controls = list("family" = "binomial",
-                                                  "SL.library" = "SL.glm"),
+                               ps.method = "glm",
+                               ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                expected)
 
@@ -324,19 +338,19 @@ test_that("`psiEstDataPrep()` returns expected results", {
                          A = data$A,
                          wgt = data$q,
                          sieve.degree = 2L,
-                         method.controls = list("family" = binomial,
-                                                "SL.library" = "SL.glm"),
+                         method = "glm",
+                         method.controls = list("family" = binomial),
                          models = c("ps", "ml.ps"))
   expected[names(ps)] <- ps
 
   data$est.ps <- TRUE
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2,
-                               mainName = c("X1", "X2"), contName = c("X2", "X3"),
-                               outcome.controls = list("family" = "gaussian",
-                                                       "SL.library" = "SL.glm"),
+                               mainName = c("X1", "X2"),
+                               outcome.method = "glm",
+                               outcome.controls = list("family" = "gaussian"),
                                psName = c("X1", "X2", "X3"),
-                               ps.controls = list("family" = "binomial",
-                                                  "SL.library" = "SL.glm"),
+                               ps.method = "glm",
+                               ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                expected)
 
@@ -359,12 +373,12 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
 
   data$est.ps <- FALSE
   expect_error(.psiEstDataPrep(data = data, sieve.degree = 2,
-                               mainName = NULL, contName = NULL,
-                               outcome.controls = list("family" = "gaussian",
-                                                       "SL.library" = "SL.glm"),
+                               mainName = NULL,
+                               outcome.method = "glm",
+                               outcome.controls = list("family" = "gaussian"),
                                psName = NULL,
-                               ps.controls = list("family" = "binomial",
-                                                  "SL.library" = "SL.glm"),
+                               ps.method = "glm",
+                               ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                "ps must be provided for testing")
 
@@ -377,18 +391,18 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
                       Y = data$Y,
                       A = data$A, wgt = data$q,
                       sieve.degree = 2L,
-                      method.controls = list("family" = gaussian(),
-                                             "SL.library" = "SL.glm"))
+                      method = "glm",
+                      method.controls = list("family" = gaussian()))
   expected[names(outcome)] <- outcome
 
   expected$est.ps <- NULL
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2,
-                               mainName = NULL, contName = NULL,
-                               outcome.controls = list("family" = "gaussian",
-                                                       "SL.library" = "SL.glm"),
+                               mainName = NULL,
+                               outcome.method = "glm",
+                               outcome.controls = list("family" = "gaussian"),
                                psName = NULL,
-                               ps.controls = list("family" = "binomial",
-                                                  "SL.library" = "SL.glm"),
+                               ps.method = "glm",
+                               ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                expected)
 
@@ -398,19 +412,19 @@ test_that("`psiEstDataPrep()` returns expected results; intercept only models", 
                          A = data$A,
                          wgt = data$q,
                          sieve.degree = 2L,
-                         method.controls = list("family" = binomial,
-                                                "SL.library" = "SL.glm"),
+                         method = "glm",
+                         method.controls = list("family" = binomial),
                          models = c("ps", "ml.ps"))
   expected[names(ps)] <- ps
 
   data$est.ps <- TRUE
   expect_equal(.psiEstDataPrep(data = data, sieve.degree = 2L,
-                               mainName = NULL, contName = NULL,
-                               outcome.controls = list("family" = "gaussian",
-                                                       "SL.library" = "SL.glm"),
+                               mainName = NULL,
+                               outcome.method = "glm",
+                               outcome.controls = list("family" = "gaussian"),
                                psName = NULL,
-                               ps.controls = list("family" = "binomial",
-                                                  "SL.library" = "SL.glm"),
+                               ps.method = "glm",
+                               ps.controls = list("family" = "binomial"),
                                fit.name = "testing"),
                expected)
 
@@ -456,93 +470,79 @@ test_that("`.psiEst()` returns expected errors", {
 
 
     expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe),
-                 "`sieve.degree` must be provided")
-
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L),
                  "`outcome.type` must be one of 'cont' or 'bin'")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                          outcome.type = 1.0),
                  "`outcome.type` must be one of 'cont' or 'bin'")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                          outcome.type = c("cont", "bin")),
                  "`outcome.type` must be one of 'cont' or 'bin'")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                          outcome.type = matrix("bin", 1L, 1L)),
                  "`outcome.type` must be one of 'cont' or 'bin'")
 
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                          outcome.type = "cont"),
-                 "`mainName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = NA),
-                 "`mainName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = c("x1", "X2")),
-                 "`mainName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = matrix(c("X1", "X2"), 2, 1L)),
-                 "`mainName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = c("X1", "X2", "X3")),
-                 "`mainName` must be NULL or a character vector")
-    mainName <- c("X2", "X3")
+                 "`models` must be a list with elements 'RWE', 'RCT', 'outcome', 'ps', 'sieve.degree', and 'contName'")
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont", models = NA),
+                 "`models` must be a list with elements 'RWE', 'RCT', 'outcome', 'ps', 'sieve.degree', and 'contName'")
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont",
+                         models = list("RWE" = 1, "RCT" = 2, "outcome" = 3,
+                                       "ps" = 4, "sieve.degree" = 5)),
+                 "`models` must be a list with elements 'RWE', 'RCT', 'outcome', 'ps', 'sieve.degree', and 'contName'")
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont",
+                         models = list("RWE" = 1, "RCT" = 2, "outcome" = 3,
+                                       "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                 "elements 'RWE' and 'RCT' of 'models' must be lists with elements 'ME' and 'PS'")
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont",
+                         models = list("RWE" = c("ME" = 1, "PS" = 2), "RCT" = 2, "outcome" = 3,
+                                       "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                 "elements 'RWE' and 'RCT' of 'models' must be lists with elements 'ME' and 'PS'")
 
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName),
-                 "`contName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName, contName = NA),
-                 "`contName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = c("x1", "X2")),
-                 "`contName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = matrix(c("X1", "X2"), 2, 1L)),
-                 "`contName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = c("X1", "X2", "X3")),
-                 "`contName` must be NULL or a character vector")
-    contName <- c("X2", "X3")
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont",
+                         models = list("RWE" = list("ME" = 1, "PS" = 2), "RCT" = 2, "outcome" = 3,
+                                       "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                 "elements 'RWE' and 'RCT' of 'models' must be lists with elements 'ME' and 'PS'")
 
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName, contName = contName),
-                 "`outcome.controls` must be provided")
+    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont",
+                         models = list("RWE" = list("ME" = 1, "PS" = 2), "RCT" = c("ME" = 1, "PS" = 2), "outcome" = 3,
+                                       "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                 "elements 'RWE' and 'RCT' of 'models' must be lists with elements 'ME' and 'PS'")
 
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = contName,
-                         outcome.controls = list()),
-                 "`psName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = contName,
-                         outcome.controls = list(),
-                         psName = NA),
-                 "`psName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = contName,
-                         outcome.controls = list(),
-                         psName = c("X1", "X2", "X3")),
-                 "`psName` must be NULL or a character vector")
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = contName,
-                         outcome.controls = list(),
-                         psName = matrix(c("X1", "X2"), 2, 1L)),
-                 "`psName` must be NULL or a character vector")
-    psName <- c("X2", "X3")
+        expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                         outcome.type = "cont",
+                         models = list("RWE" = list("ME" = 1, "PS" = 2), "RCT" = list("ME" = 1, "PS" = 2), "outcome" = 3,
+                                       "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                     "elements 'outcome' and 'ps' of 'models' must be lists with elements 'method' and 'controls'")
 
-    expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
-                         outcome.type = "cont", mainName = mainName,
-                         contName = contName,
-                         outcome.controls = list(),
-                         psName = psName),
-                 "`ps.controls` must be provided")
-
+        expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                             outcome.type = "cont",
+                             models = list("RWE" = list("ME" = 1, "PS" = 2),
+                                           "RCT" = list("ME" = 1, "PS" = 2),
+                                           "outcome" = c("method" = 1, "controls" = 2),
+                                           "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                     "elements 'outcome' and 'ps' of 'models' must be lists with elements 'method' and 'controls'")
+        expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                             outcome.type = "cont",
+                             models = list("RWE" = list("ME" = 1, "PS" = 2),
+                                           "RCT" = list("ME" = 1, "PS" = 2),
+                                           "outcome" = list("method" = 1, "controls" = 2),
+                                           "ps" = 4, "sieve.degree" = 5, "contName" = 6)),
+                     "elements 'outcome' and 'ps' of 'models' must be lists with elements 'method' and 'controls'")
+        expect_error(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
+                             outcome.type = "cont",
+                             models = list("RWE" = list("ME" = 1, "PS" = 2),
+                                           "RCT" = list("ME" = 1, "PS" = 2),
+                                           "outcome" = list("method" = 1, "controls" = 2),
+                                           "ps" = c("method" = 1, "controls" = 2),
+                                           "sieve.degree" = 5, "contName" = 6)),
+                     "elements 'outcome' and 'ps' of 'models' must be lists with elements 'method' and 'controls'")
 })
 
 test_that("`.psiEst()` returns expected results", {
@@ -563,12 +563,11 @@ test_that("`.psiEst()` returns expected results", {
   data.rct <- .psiEstDataPrep(data = data.rct,
                               sieve.degree = 2L,
                               mainName = c("X2", "X3"),
-                              contName = c("X2", "X3"),
-                              outcome.controls = list("family" = gaussian(),
-                                                      "SL.library" = "SL.glm"),
+                              outcome.method = "glm",
+                              outcome.controls = list("family" = gaussian()),
                               psName = c("X2", "X3"),
-                              ps.controls = list("family" = binomial(),
-                                                 "SL.library" = "SL.glm"),
+                              ps.method = "glm",
+                              ps.controls = list("family" = binomial()),
                               fit.name = "RWE")
   data.rwe <- data.rct
 
@@ -637,14 +636,16 @@ test_that("`.psiEst()` returns expected results", {
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
-  expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+  models <- list("RCT" = list("ME" = c("X2", "X3"), "PS" = c("X2", "X3")),
+                 "RWE" = list("ME" = c("X2", "X3"), "PS" = c("X2", "X3")),
+                 "sieve.degree" = 2L,
+                 "contName" = c("X2", "X3"),
+                 "outcome" = list(method = "glm", controls = list("family" = gaussian())),
+                 "ps" = list(method = "glm", controls = list("family" = binomial())))
+
+  expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                        outcome.type = "cont",
-                       mainName = c("X2", "X3"), contName = c("X2", "X3"),
-                       outcome.controls = list("family" = gaussian(),
-                                               "SL.library" = "SL.glm"),
-                       psName = c("X2", "X3"),
-                       ps.controls = list("family" = binomial(),
-                                          "SL.library" = "SL.glm")),
+                       models = models),
                expected)
 
 })
@@ -668,12 +669,11 @@ test_that("`.psiEst()` returns expected results; one covariate", {
   data.rct <- .psiEstDataPrep(data = data.rct,
                               sieve.degree = 2L,
                               mainName = c("X1"),
-                              contName = c("X1"),
-                              outcome.controls = list("family" = gaussian(),
-                                                      "SL.library" = "SL.glm"),
+                              outcome.method = "glm",
+                              outcome.controls = list("family" = gaussian()),
                               psName = c("X1"),
-                              ps.controls = list("family" = binomial(),
-                                                 "SL.library" = "SL.glm"),
+                              ps.method = "glm",
+                              ps.controls = list("family" = binomial()),
                               fit.name = "RWE")
   data.rwe <- data.rct
 
@@ -742,14 +742,16 @@ test_that("`.psiEst()` returns expected results; one covariate", {
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
-  expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+  models = list("RCT" = list("ME" = "X1", "PS" = "X1"),
+                "RWE" = list("ME" = "X1", "PS" = "X1"),
+                "contName" = "X1",
+                sieve.degree = 2L,
+                "outcome" = list("method" = "glm", controls = list("family" = gaussian())),
+                "ps" = list("method" = "glm", controls = list("family" = binomial())))
+
+  expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                        outcome.type = "cont",
-                       mainName = c("X1"), contName = c("X1"),
-                       outcome.controls = list("family" = gaussian(),
-                                               "SL.library" = "SL.glm"),
-                       psName = c("X1"),
-                       ps.controls = list("family" = binomial(),
-                                          "SL.library" = "SL.glm")),
+                       models = models),
                expected)
 
 })
@@ -770,12 +772,11 @@ test_that("`.psiEst()` returns expected results; no covariate", {
   data.rct <- .psiEstDataPrep(data = data.rct,
                               sieve.degree = 2L,
                               mainName = NULL,
-                              contName = NULL,
-                              outcome.controls = list("family" = gaussian(),
-                                                      "SL.library" = "SL.glm"),
+                              outcome.method = "glm",
+                              outcome.controls = list("family" = gaussian()),
                               psName = NULL,
-                              ps.controls = list("family" = binomial(),
-                                                 "SL.library" = "SL.glm"),
+                              ps.method = "glm",
+                              ps.controls = list("family" = binomial()),
                               fit.name = "RWE")
   data.rwe <- data.rct
 
@@ -842,14 +843,16 @@ test_that("`.psiEst()` returns expected results; no covariate", {
   data.rwe <- data.rct
   data.rct$est.ps <- TRUE
 
-  expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe, sieve.degree = 2L,
+  models = list("RCT" = list("ME" = NULL, "PS" = NULL),
+                "RWE" = list("ME" = NULL, "PS" = NULL),
+                "contName" = NULL,
+                sieve.degree = 2L,
+                "outcome" = list("method" = "glm", controls = list("family" = gaussian())),
+                "ps" = list("method" = "glm", controls = list("family" = binomial())))
+
+  expect_equal(.psiEst(data.rct = data.rct, data.rwe = data.rwe,
                        outcome.type = "cont",
-                       mainName = NULL, contName = NULL,
-                       outcome.controls = list("family" = gaussian(),
-                                               "SL.library" = "SL.glm"),
-                       psName = NULL,
-                       ps.controls = list("family" = binomial(),
-                                          "SL.library" = "SL.glm")),
+                       models = models),
                expected)
 
 })

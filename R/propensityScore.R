@@ -16,7 +16,7 @@
 #'
 #' @include sieveEstimator.R
 #' @keywords internal
-.propensityScore <- function(X, A, wgt, sieve.degree, method.controls,
+.propensityScore <- function(X, A, wgt, sieve.degree, method, method.controls,
                              models) {
   stopifnot(
     "`X` must be a named numeric matrix" = !missing(X) &&
@@ -26,6 +26,7 @@
     "`wgt` must be a numeric vector" = !missing(wgt) && .isNumericVector(wgt, nrow(X)),
     "`sieve.degree` must be a scalar numeric" = !missing(sieve.degree) &&
       .isNumericVector(sieve.degree, 1L),
+    "`method` must be provided" = !missing(method),
     "`method.controls` must be a list" = !missing(method.controls) &&
       is.list(method.controls),
     "`models` can contain only {'ps', 'ml.ps'}" = !missing(models) &&
@@ -39,6 +40,7 @@
     res$ps <- tryCatch(.sieveEstimator(X = X, Y = A, wgt = wgt,
                                        subset = rep(TRUE, nrow(X)),
                                        sieve.degree = 1L,
+                                       method = method,
                                        method.controls = method.controls),
                        error = function(e) {
                          stop("unable to fit propensity score model\n\t",
@@ -50,6 +52,7 @@
     res$ml.ps <- tryCatch(.sieveEstimator(X = X, Y = A, wgt = wgt,
                                           subset = rep(TRUE, nrow(X)),
                                           sieve.degree = sieve.degree,
+                                          method = method,
                                           method.controls = method.controls),
                           error = function(e) {
                             stop("unable to fit sieve propensity score model\n\t",

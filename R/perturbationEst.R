@@ -9,28 +9,17 @@
 #' @param data.rwe A named list containing element "X"for an RWE.
 #'   Note that this function calls .psiEst(), which has additional requirements
 #'   for the elements that must be in `data.rwe`
-#' @param sieve.degree A scalar numeric object. The degree of the polynomial
-#'   used to define the sieve model.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
-#' @param mainName NULL, character vector or an integer. The covariates of the
-#'   main effects component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note that an intercept is always
-#'   added; though it is not recommended, an intercept only model can be
-#'   specified as `mainName = 1`.
-#' @param contName NULL, character vector or an integer. The covariates of the
-#'   contrasts component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note these are the covariates that
-#'   interact with the treatment variable (~ A:contName); an intercept is always
-#'   included, such that ~A is the minimal model; though it is not recommended,
-#'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner()
-#' @param psName A character vector. The covariates of the propensity model.
-#' @param ps.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner()
+#' @param models A list. Must contain elements 'RCT', a list containing the
+#'   main effects model (ME) and propensity score model (PS); 'RWE', a list
+#'   containing the main effects model (ME) and propensity score model (PS);
+#'   'contName' the variables of the treatment effect model; 'sieve.degree',
+#'   the degree of the Sieve estimator; 'outcome', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   outcome regression; and 'ps', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   propensity score regression
 #'
 #' @returns A list object containing $psi is a 4 * {p+1} vector containing the
 #'   preliminary, efficient integrative and RCT estimators. Element
@@ -39,13 +28,7 @@
 #' @importFrom stats rexp
 #' @include psiEst.R
 #' @keywords internal
-.perturbationEstIteration <- function(data.rct, data.rwe,
-                                      sieve.degree,
-                                      outcome.type,
-                                      mainName, contName,
-                                      outcome.controls,
-                                      psName,
-                                      ps.controls) {
+.perturbationEstIteration <- function(data.rct, data.rwe, outcome.type, models) {
 
   stopifnot(
     "`data.rct` must be a list containing X" = !missing(data.rct) &&
@@ -56,25 +39,15 @@
       ncol(data.rct$X) == 0L,
     "`data.rwe$X` must be a named numeric matrix" = .isNamedNumericMatrix(data.rwe$X) ||
       ncol(data.rwe$X) == 0L,
-    "`sieve.degree` must be provided" = !missing(sieve.degree),
     "`outcome.type` must be provided" = !missing(outcome.type),
-    "`mainName` must be provided" = !missing(mainName),
-    "`contName` must be provided" = !missing(contName),
-    "`outcome.controls` must be provided" = !missing(outcome.controls),
-    "`psName` must be provided" = !missing(psName),
-    "`ps.controls` must be provided" = !missing(ps.controls)
+    "`models` must be provided" = !missing(models)
   )
 
   data.rct$q <- stats::rexp(nrow(data.rct$X))
   data.rwe$q <- stats::rexp(nrow(data.rwe$X))
 
   psi_list_p <- .psiEst(data.rct = data.rct, data.rwe = data.rwe,
-                        sieve.degree = sieve.degree,
-                        outcome.type = outcome.type,
-                        mainName = mainName, contName = contName,
-                        outcome.controls = outcome.controls,
-                        psName = psName,
-                        ps.controls = ps.controls)
+                        outcome.type = outcome.type, models = models)
 
   nms <- c(t(outer(rownames(psi_list_p$psi), colnames(psi_list_p$psi),
                    FUN = paste, sep = ".")))
@@ -95,28 +68,17 @@
 #'   Note that this function calls .psiEst(), which has additional requirements
 #'   for the elements that must be in `data.rwe`
 #' @param n.pert An integer. The number of perturbations.
-#' @param sieve.degree A scalar numeric object. The degree of the polynomial
-#'   used to define the sieve model.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
-#' @param mainName NULL, character vector or an integer. The covariates of the
-#'   main effects component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note that an intercept is always
-#'   added; though it is not recommended, an intercept only model can be
-#'   specified as `mainName = 1`.
-#' @param contName NULL, character vector or an integer. The covariates of the
-#'   contrasts component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note these are the covariates that
-#'   interact with the treatment variable (~ A:contName); an intercept is always
-#'   included, such that ~A is the minimal model; though it is not recommended,
-#'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner().
-#' @param psName A character vector. The covariates of the propensity model.
-#' @param ps.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner().
+#' @param models A list. Must contain elements 'RCT', a list containing the
+#'   main effects model (ME) and propensity score model (PS); 'RWE', a list
+#'   containing the main effects model (ME) and propensity score model (PS);
+#'   'contName' the variables of the treatment effect model; 'sieve.degree',
+#'   the degree of the Sieve estimator; 'outcome', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   outcome regression; and 'ps', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   propensity score regression
 #'
 #' @returns A list object containing `ptb` a matrix of the estimated parameters
 #'   for each perturbation and `Shat.rw.psihat.rt` a matrix of the estimated
@@ -126,12 +88,7 @@
 #' @include psiEst.R
 #' @keywords internal
 .perturbationEst <- function(data.rwe, data.rct, n.pert = 100L,
-                             sieve.degree,
-                             outcome.type,
-                             mainName, contName,
-                             outcome.controls,
-                             psName,
-                             ps.controls) {
+                             outcome.type, models) {
 
   stopifnot(
     "`data.rct` must be provided" = !missing(data.rct),
@@ -139,25 +96,16 @@
     "`n.pert` must be a positive integer" = !missing(n.pert) &&
       .isNumericVector(n.pert, 1L) &&
       isTRUE(all.equal(n.pert, as.integer(n.pert))) && n.pert > 0,
-    "`sieve.degree` must be provided" = !missing(sieve.degree),
     "`outcome.type` must be provided" = !missing(outcome.type),
-    "`mainName` must be provided" = !missing(mainName),
-    "`contName` must be provided" = !missing(contName),
-    "`outcome.controls` must be provided" = !missing(outcome.controls),
-    "`psName` must be provided" = !missing(psName),
-    "`ps.controls` must be provided" = !missing(ps.controls)
+    "`models` must be provided" = !missing(models)
   )
 
   res <- list()
   for (i in seq_len(n.pert)) {
     res[[i]] <- .perturbationEstIteration(data.rct = data.rct,
                                           data.rwe = data.rwe,
-                                          sieve.degree = sieve.degree,
                                           outcome.type = outcome.type,
-                                          mainName = mainName, contName = contName,
-                                          outcome.controls = outcome.controls,
-                                          psName = psName,
-                                          ps.controls = ps.controls)
+                                          models = models)
 
   }
 
@@ -223,28 +171,17 @@
 #'   Note that this function calls .perturbationEst(), which has additional
 #'   requirements for the elements that must be in `data.rwe`
 #' @param n.pert An integer. The number of perturbations.
-#' @param sieve.degree A scalar numeric object. The degree of the polynomial
-#'   used to define the sieve model.
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
-#' @param mainName NULL, character vector or an integer. The covariates of the
-#'   main effects component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note that an intercept is always
-#'   added; though it is not recommended, an intercept only model can be
-#'   specified as `mainName = 1`.
-#' @param contName NULL, character vector or an integer. The covariates of the
-#'   contrasts component of the outcome model. If NULL, all covariates in
-#'   `data.rct$X` are included; if a character vector, the column headers of
-#'   `data.rct$X` to include in the model. Note these are the covariates that
-#'   interact with the treatment variable (~ A:contName); an intercept is always
-#'   included, such that ~A is the minimal model; though it is not recommended,
-#'   an intercept only model can be specified as `contName = 1`.
-#' @param outcome.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner().
-#' @param psName A character vector. The covariates of the propensity model.
-#' @param ps.controls A list object. Any user specified inputs to
-#'   SuperLearner::SuperLearner().
+#' @param models A list. Must contain elements 'RCT', a list containing the
+#'   main effects model (ME) and propensity score model (PS); 'RWE', a list
+#'   containing the main effects model (ME) and propensity score model (PS);
+#'   'contName' the variables of the treatment effect model; 'sieve.degree',
+#'   the degree of the Sieve estimator; 'outcome', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   outcome regression; and 'ps', a list containing the
+#'   method (method) and regression control arguments (controls) for the
+#'   propensity score regression
 #'
 #' @returns A list object containing
 #'   \begin{itemize}
@@ -261,12 +198,7 @@
 #' @include psiEst.R
 #' @keywords internal
 .perturbationProcedure <- function(data.rct, data.rwe, n.pert = 100L,
-                                   sieve.degree,
-                                   outcome.type,
-                                   mainName, contName,
-                                   outcome.controls,
-                                   psName,
-                                   ps.controls) {
+                                   outcome.type, models) {
 
   stopifnot(
     "`data.rct` must be a list containing X" = !missing(data.rct) &&
@@ -278,16 +210,13 @@
     "`data.rwe$X` must be a named numeric matrix" = .isNamedNumericMatrix(data.rwe$X) ||
       ncol(data.rwe$X) == 0L,
     "`n.pert` must be provided" = !missing(n.pert),
-    "`sieve.degree` must be provided" = !missing(sieve.degree),
     "`outcome.type` must be provided" = !missing(outcome.type),
-    "`mainName` must be provided" = !missing(mainName),
-    "`contName` must be provided" = !missing(contName),
-    "`outcome.controls` must be provided" = !missing(outcome.controls),
-    "`psName` must be provided" = !missing(psName),
-    "`ps.controls` must be provided" = !missing(ps.controls)
+    "`models` must be a list with elements 'RWE', 'RCT', 'outcome', 'ps', 'sieve.degree', and 'contName'" =
+      !missing(models) && is.vector(models, mode = "list") &&
+      all(c("RWE", "RCT", "outcome", "ps", "sieve.degree", "contName") %in% names(models))
   )
 
-  n_cov <- length(contName) + 1L
+  n_cov <- length(models$contName) + 1L
   n_rwe <- nrow(data.rwe$X)
 
   ntime <- 0L
@@ -301,12 +230,8 @@
     pert_est <- .perturbationEst(data.rwe = data.rwe,
                                  data.rct = data.rct,
                                  n.pert = n.pert,
-                                 sieve.degree = sieve.degree,
                                  outcome.type = outcome.type,
-                                 mainName = mainName, contName = contName,
-                                 outcome.controls = outcome.controls,
-                                 psName = psName,
-                                 ps.controls = ps.controls)
+                                 models = models)
 
     Vee <- .computeV(ptb = pert_est$ptb, n.rwe = n_rwe)
 

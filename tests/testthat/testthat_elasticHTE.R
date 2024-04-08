@@ -45,18 +45,32 @@ test_that("`elasticHTE()` returns expected errors", {
                  "`data.rwe$X` and `data.rct$X` must be matrices with column names", fixed = TRUE)
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = NA_character_),
-                 "`mainName` must be a character vector of X column headers")
+                            mainName.rct = NA_character_),
+                 "`mainName.rct` must be a character vector of X column headers")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = 2),
-                 "`mainName` must be a character vector of X column headers")
+                            mainName.rct = 2),
+                 "`mainName.rct` must be a character vector of X column headers")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = c("x1", "X2", "X3")),
-                 "`mainName` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = c("X1", "X2", "X3", "X4")),
-                 "`mainName` must be a character vector of X column headers")
+                            mainName.rct = c("x1", "X2", "X3")),
+                 "`mainName.rct` must be a character vector of X column headers")
     mainName <- c("X1", "X2", "X3")
+
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName.rct = mainName,
+                            mainName.rwe = NA_character_),
+                 "`mainName.rwe` must be a character vector of X column headers")
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName.rct = mainName,
+                            mainName.rwe = 2),
+                 "`mainName.rwe` must be a character vector of X column headers")
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName.rct = mainName,
+                            mainName.rwe = c("x1", "X2", "X3")),
+                 "`mainName.rwe` must be a character vector of X column headers")
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName.rct = mainName,
+                            mainName.rwe = c("X1", "X2", "X3", "X4")),
+                 "`mainName.rwe` must be a character vector of X column headers")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
                             mainName = mainName,
@@ -79,24 +93,44 @@ test_that("`elasticHTE()` returns expected errors", {
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
                             mainName = mainName,
                             contName = contName,
-                            psName = NA_character_),
-                 "`psName` must be a character vector of X column headers")
+                            psName.rct = NA_character_),
+                 "`psName.rct` must be a character vector of X column headers")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
                             mainName = mainName,
                             contName = contName,
-                            psName = 2),
-                 "`psName` must be a character vector of X column headers")
+                            psName.rct = 2),
+                 "`psName.rct` must be a character vector of X column headers")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
                             mainName = mainName,
                             contName = contName,
-                            psName = c("x1", "X2", "X3")),
-                 "`psName` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = c("X1", "X2", "X3", "X4")),
-                 "`psName` must be a character vector of X column headers")
+                            psName.rct = c("x1", "X2", "X3")),
+                 "`psName.rct` must be a character vector of X column headers")
     psName <- c("X1", "X2", "X3")
+
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName = mainName,
+                            contName = contName,
+                            psName.rct = psName,
+                            psName.rwe = NA_character_),
+                 "`psName.rwe` must be a character vector of X column headers")
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName = mainName,
+                            contName = contName,
+                            psName.rct = psName,
+                            psName.rwe = 2),
+                 "`psName.rwe` must be a character vector of X column headers")
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName = mainName,
+                            contName = contName,
+                            psName.rct = psName,
+                            psName.rwe = c("x1", "X2", "X3")),
+                 "`psName.rwe` must be a character vector of X column headers")
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                            mainName = mainName,
+                            contName = contName,
+                            psName.rct = psName,
+                            psName.rwe = c("X1", "X2", "X3", "X4")),
+                 "`psName.rwe` must be a character vector of X column headers")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
                             mainName = mainName,
@@ -469,16 +503,20 @@ test_that("`elasticHTE()` results in expected internal errors", {
                    "Y" = 1:10, "A" = 1:10)
 
   expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
-               "not all model covariates are found in provided data")
+               paste("duplicate column headers found in X,",
+                     "possibly due to required removal of spaces",
+                     "please eliminate spaces from column header names in `data.rct$X`"), fixed = TRUE)
 
   data.rwe <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X 1", "X.1", "X3"))),
                    "Y" = 1:10, "A" = 1:10)
-  expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
+  data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
+                   "Y" = 1:10, "A" = 1:10)
+
+  expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
+                          psName.rwe = NULL, contName = "X3"),
                paste("duplicate column headers found in X,",
                      "possibly due to required removal of spaces",
-                     "please eliminate spaces from column header names in `data.rct$X`",
-                     "and `data.rwe$X"), fixed = TRUE)
-
+                     "please eliminate spaces from column header names in `data.rwe$X`"), fixed = TRUE)
   data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
                    "Y" = 1:10, "A" = 1:10)
   data.rwe <- list("X" = matrix(1, 10L, 2L, dimnames = list(NULL, c("X1", "X2"))),
@@ -608,34 +646,23 @@ test_that("`.elasticHTE()` returns expected results", {
     n_rct <- n
     n_rwe <- m
     thres.psi <- sqrt(log(m))
+
+    models <- list("RCT" = list("ME" = c("X1", "X2", "X3"), "PS" = c("X1", "X2", "X3")),
+                   "RWE" = list("ME" = c("X1", "X2", "X3"), "PS" = c("X1", "X2", "X3")),
+                   sieve.degree = 2L,
+                   outcome = list("method" = "glm", controls = list("family" = "gaussian")),
+                   ps = list("method" = "glm", controls = list("family" = "quasibinomial")),
+                   contName = c("X1", "X2", "X3"))
     psi_list <- .psiEst(data.rwe = data.rwe,
                         data.rct = data.rct,
-                        sieve.degree = 2L,
                         outcome.type = "cont",
-                        mainName = c("X1", "X2", "X3"),
-                        contName = c("X1", "X2", "X3"),
-                        outcome.controls = list("family" = "gaussian",
-                                                "SL.library" = "SL.glm",
-                                                "cvControl" = list(V = 2)),
-                        psName = c("X1", "X2", "X3"),
-                        ps.controls = list("family" = "quasibinomial",
-                                           "SL.library" = "SL.glm",
-                                           "cvControl" = list(V = 2)))
+                        models = models)
 
     perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                           data.rct = data.rct,
                                           n.pert = 10L,
-                                          sieve.degree = 2L,
                                           outcome.type = "cont",
-                                          mainName = c("X1", "X2", "X3"),
-                                          contName = c("X1", "X2", "X3"),
-                                          outcome.controls = list("family" = "gaussian",
-                                                                  "SL.library" = "SL.glm",
-                                                                  "cvControl" = list(V = 2)),
-                                          psName = c("X1", "X2", "X3"),
-                                          ps.controls = list("family" = "quasibinomial",
-                                                             "SL.library" = "SL.glm",
-                                                             "cvControl" = list(V = 2)))
+                                          models = models)
 
     Sigma_SS_matrices <- .calculateSigmaSSMatrices(V.rt = perm_result$V.rt,
                                                    V.eff = perm_result$V.eff,
@@ -726,6 +753,13 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
     data.rwe$A <- stats::rbinom(m, 1, 0.4)
   })
 
+  models <- list("RCT" = list("ME" = c("X1"), "PS" = c("X3")),
+                 "RWE" = list("ME" = c("X1"), "PS" = c("X3")),
+                 sieve.degree = 2L,
+                 outcome = list("method" = "glm", controls = list("family" = "gaussian")),
+                 ps = list("method" = "glm", controls = list("family" = "quasibinomial")),
+                 contName = c("X2"))
+
   withr::with_seed(2345L, {
 
     data.rct$est.ps <- TRUE
@@ -736,32 +770,14 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
     thres.psi <- sqrt(log(m))
     psi_list <- .psiEst(data.rwe = data.rwe,
                         data.rct = data.rct,
-                        sieve.degree = 2L,
                         outcome.type = "cont",
-                        mainName = c("X1"),
-                        contName = c("X2"),
-                        outcome.controls = list("family" = "gaussian",
-                                                "SL.library" = "SL.glm",
-                                                "cvControl" = list(V = 2)),
-                        psName = c("X3"),
-                        ps.controls = list("family" = "quasibinomial",
-                                           "SL.library" = "SL.glm",
-                                           "cvControl" = list(V = 2)))
+                        models = models)
 
     perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                           data.rct = data.rct,
                                           n.pert = 10L,
-                                          sieve.degree = 2L,
                                           outcome.type = "cont",
-                                          mainName = c("X1"),
-                                          contName = c("X2"),
-                                          outcome.controls = list("family" = "gaussian",
-                                                                  "SL.library" = "SL.glm",
-                                                                  "cvControl" = list(V = 2)),
-                                          psName = c("X3"),
-                                          ps.controls = list("family" = "quasibinomial",
-                                                             "SL.library" = "SL.glm",
-                                                             "cvControl" = list(V = 2)))
+                                          models = models)
 
     Sigma_SS_matrices <- .calculateSigmaSSMatrices(V.rt = perm_result$V.rt,
                                                    V.eff = perm_result$V.eff,
@@ -826,9 +842,9 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
 
   test_object <- withr::with_seed(2345L,
                                   elasticHTE(data.rct, data.rwe,
-                                             mainName = "X1",
+                                             mainName.rct = "X1",
                                              contName = "X2",
-                                             psName = "X3",
+                                             psName.rct = "X3",
                                              n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
@@ -864,34 +880,23 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
     n_rct <- n
     n_rwe <- m
     thres.psi <- sqrt(log(m))
+    models <- list("RCT" = list("ME" = NULL, "PS" = NULL),
+                   "RWE" = list("ME" = NULL, "PS" = NULL),
+                   sieve.degree = 2L,
+                   outcome = list("method" = "glm", controls = list("family" = "gaussian")),
+                   ps = list("method" = "glm", controls = list("family" = "quasibinomial")),
+
+                   contName = NULL)
     psi_list <- .psiEst(data.rwe = data.rwe,
                         data.rct = data.rct,
-                        sieve.degree = 2L,
                         outcome.type = "cont",
-                        mainName = NULL,
-                        contName = NULL,
-                        outcome.controls = list("family" = "gaussian",
-                                                "SL.library" = "SL.glm",
-                                                "cvControl" = list(V = 2)),
-                        psName = NULL,
-                        ps.controls = list("family" = "quasibinomial",
-                                           "SL.library" = "SL.glm",
-                                           "cvControl" = list(V = 2)))
+                        models = models)
 
     perm_result <- .perturbationProcedure(data.rwe = data.rwe,
                                           data.rct = data.rct,
                                           n.pert = 10L,
-                                          sieve.degree = 2L,
                                           outcome.type = "cont",
-                                          mainName = NULL,
-                                          contName = NULL,
-                                          outcome.controls = list("family" = "gaussian",
-                                                                  "SL.library" = "SL.glm",
-                                                                  "cvControl" = list(V = 2)),
-                                          psName = NULL,
-                                          ps.controls = list("family" = "quasibinomial",
-                                                             "SL.library" = "SL.glm",
-                                                             "cvControl" = list(V = 2)))
+                                          models = models)
 
     Sigma_SS_matrices <- .calculateSigmaSSMatrices(V.rt = perm_result$V.rt,
                                                    V.eff = perm_result$V.eff,
@@ -956,9 +961,9 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
 
   test_object <- withr::with_seed(2345L,
                                   elasticHTE(data.rct, data.rwe,
-                                             mainName = 1,
+                                             mainName.rct = 1,
                                              contName = 1,
-                                             psName = 1,
+                                             psName.rct = 1,
                                              n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
@@ -969,9 +974,9 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
 
   test_object <- withr::with_seed(2345L,
                                   elasticHTE(data.rct, data.rwe,
-                                             mainName = 1,
+                                             mainName.rct = 1,
                                              contName = 1,
-                                             psName = 1,
+                                             psName.rct = 1,
                                              n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
