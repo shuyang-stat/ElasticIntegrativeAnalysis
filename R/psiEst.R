@@ -240,14 +240,18 @@
 
   # ensure that the two lists are in the same order and combine
   data.rwe <- data.rwe[names(data.rct)]
+  # we have the possibility that RCT and RWE have different X matrices now
+  # they will always have common contName, and this is all we need.
   data.integ <- mapply(data.rct, data.rwe,
                        FUN = function(x, y) {
                          if (is.matrix(x)) {
-                           rbind(x, y)
+                           idx <- match(colnames(x), colnames(y))
+                           rbind(x[, !is.na(idx), drop = FALSE],
+                                 y[, idx[!is.na(idx)], drop = FALSE])
                          } else {
                            c(x, y)
                          }
-                       })
+                       }, SIMPLIFY = FALSE)
 
   psi <- matrix(NA, nrow = 3, ncol = length(models$contName) + 1L,
                 dimnames = c(list(c("p", "eff", "rt"),

@@ -8,10 +8,11 @@
 \format{
 elasticToy.bin provides two datasets. The elasticToy.bin.rct
 100 participant records; elasticToy.bin.rwe 500 participant records. Each
-list provides the following:
+data.frame provides the following:
 \describe{
 \item{Y}{A binary outcome.}
-\item{X}{A matrix of two covariates, X1, and X2}
+\item{X1}{A continuous covariate.}
+\item{X2}{A continuous covariate.}
 \item{A}{A binary treatment variable}
 }
 }

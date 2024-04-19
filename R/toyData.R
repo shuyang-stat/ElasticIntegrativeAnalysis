@@ -90,8 +90,8 @@ NULL
   A_rct <- stats::rbinom(n.rct, 1L, 0.3)
   A_rwe <- stats::rbinom(n.rwe, 1L, 0.35)
 
-  list("RCT" = list("Y" = Y_bin_rct, "X" = X_rct, "A" = A_rct),
-       "RWE" = list("Y" = Y_bin_rwe, "X" = X_rwe, "A" = A_rwe))
+  list("RCT" = data.frame(X_rct, "Y" = Y_bin_rct, "A" = A_rct),
+       "RWE" = data.frame(X_rwe, "Y" = Y_bin_rwe, "A" = A_rwe))
 }
 
 #' Toy Binary Outcome Dataset
@@ -107,10 +107,11 @@ NULL
 #'
 #' @format elasticToy.bin provides two datasets. The elasticToy.bin.rct
 #'   100 participant records; elasticToy.bin.rwe 500 participant records. Each
-#'   list provides the following:
+#'   data.frame provides the following:
 #' \describe{
 #' \item{Y}{A binary outcome.}
-#' \item{X}{A matrix of two covariates, X1, and X2}
+#' \item{X1}{A continuous covariate.}
+#' \item{X2}{A continuous covariate.}
 #' \item{A}{A binary treatment variable}
 #' }
 #'

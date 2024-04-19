@@ -37,6 +37,7 @@ Collate:
     'bias.R'
     'bootFunc.R'
     'cGamma.R'
+    'dataInput.R'
     'utils.R'
     'stopTests.R'
     'sigma_matrices.R'

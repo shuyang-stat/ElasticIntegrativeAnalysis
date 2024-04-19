@@ -1,241 +1,85 @@
 test_that("`elasticHTE()` returns expected errors", {
+
     expect_error(elasticHTE(),
-                 "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = matrix(1:10, 10, 3, dimnames = list(NULL, c("X", "Y", "A")))),
-                 "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = list(matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                                            1:10, 1:10)),
-                 "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = list("X" = matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                                            1:10, 1:10)),
-                 "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = list("X" = matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                                            "Y" = 1:10, 1:10)),
-                 "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'")
+                 "`data.rct` must be provided")
     data.rct <- list("X" = matrix(1:10, 10, 4, dimnames = list(NULL, c("X1", "X2", "X3", "X4"))),
-                     "Y" = 1:10, A = rep(0L, 10))
+                     "Y" = 1:10, "A" = rep(0L, 10), "mainName" = 1L, "contName" = 1L, "psName" = 1L)
 
     expect_error(elasticHTE(data.rct = data.rct),
-                 "`data.rwe` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = data.rct,
-                            data.rwe = matrix(1:10, 10, 3, dimnames = list(NULL, c("X", "Y", "A")))),
-                 "`data.rwe` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = data.rct,
-                            data.rwe = list(matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                                            1:10, 1:10)),
-                 "`data.rwe` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = data.rct,
-                            data.rwe = list("X" = matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                                            1:10, 1:10)),
-                 "`data.rwe` must be a named list containing elements 'X', 'Y', and 'A'")
-    expect_error(elasticHTE(data.rct = data.rct,
-                            data.rwe = list("X" = matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                                            "Y" = 1:10, 1:10)),
-                 "`data.rwe` must be a named list containing elements 'X', 'Y', and 'A'")
-    data.rwe <- list("X" = matrix(1:10, 10, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                     "Y" = 1:10, A = rep(0L, 10))
+                 "`data.rwe` must be provided")
 
-    expect_error(elasticHTE(data.rct = list("X" = matrix(1:10, 10, 3),
-                                            "Y" = 1:10, A = rep(0L, 10)),
-                            data.rwe = data.rwe),
-                 "`data.rwe$X` and `data.rct$X` must be matrices with column names", fixed = TRUE)
-    expect_error(elasticHTE(data.rct = data.rct,
-                            data.rwe = list("X" = matrix(1:10, 10, 3),
-                                            "Y" = 1:10, A = rep(0L, 10))),
-                 "`data.rwe$X` and `data.rct$X` must be matrices with column names", fixed = TRUE)
+    data.rwe <- data.rct
+    data.rct$contName <- c("X1")
+        expect_error(elasticHTE(data.rct = data.rct,
+                                data.rwe = data.rwe),
+                 "`data.rct$contName` must match `data.rwe$contName`",
+                 fixed = TRUE)
+    data.rct$contName <- 1L
+
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe, ps.rct = 1L),
+                 "`ps.rct` must be NULL or a numeric vector of length = nrow(data.rct$X)", fixed = TRUE)
+    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe, ps.rct = "1L"),
+                 "`ps.rct` must be NULL or a numeric vector of length = nrow(data.rct$X)", fixed = TRUE)
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = NA_character_),
-                 "`mainName.rct` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = 2),
-                 "`mainName.rct` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = c("x1", "X2", "X3")),
-                 "`mainName.rct` must be a character vector of X column headers")
-    mainName <- c("X1", "X2", "X3")
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = mainName,
-                            mainName.rwe = NA_character_),
-                 "`mainName.rwe` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = mainName,
-                            mainName.rwe = 2),
-                 "`mainName.rwe` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = mainName,
-                            mainName.rwe = c("x1", "X2", "X3")),
-                 "`mainName.rwe` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName.rct = mainName,
-                            mainName.rwe = c("X1", "X2", "X3", "X4")),
-                 "`mainName.rwe` must be a character vector of X column headers")
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = NA_character_),
-                 "`contName` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = 2),
-                 "`contName` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = c("x1", "X2", "X3")),
-                 "`contName` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = c("X1", "X2", "X3", "X4")),
-                 "`contName` must be a character vector of X column headers")
-    contName <- c("X1", "X2", "X3")
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = NA_character_),
-                 "`psName.rct` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = 2),
-                 "`psName.rct` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = c("x1", "X2", "X3")),
-                 "`psName.rct` must be a character vector of X column headers")
-    psName <- c("X1", "X2", "X3")
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = psName,
-                            psName.rwe = NA_character_),
-                 "`psName.rwe` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = psName,
-                            psName.rwe = 2),
-                 "`psName.rwe` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = psName,
-                            psName.rwe = c("x1", "X2", "X3")),
-                 "`psName.rwe` must be a character vector of X column headers")
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName.rct = psName,
-                            psName.rwe = c("X1", "X2", "X3", "X4")),
-                 "`psName.rwe` must be a character vector of X column headers")
-
-    expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = NA_real_),
                  "`thres.psi` must be a positive scalar")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = "a"),
                  "`thres.psi` must be a positive scalar")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.0),
                  "`thres.psi` must be a positive scalar")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = -0.000001),
                  "`thres.psi` must be a positive scalar")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = c(0.1, 0.2)),
                  "`thres.psi` must be a positive scalar")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = NULL),
                  "`sieve.degree` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 0.0),
                  "`sieve.degree` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 1.1),
                  "`sieve.degree` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = c(1, 2)),
                  "`sieve.degree` must be a positive integer")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "Cont"))
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = 1L))
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "binary"))
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
                             outcome.controls = "a"),
                  "`outcome.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
                             outcome.controls = list("gaussian")),
                  "`outcome.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -243,9 +87,6 @@ test_that("`elasticHTE()` returns expected errors", {
                  "`outcome.controls` must be a named list")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -253,9 +94,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             ps.controls = "a"),
                  "`ps.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -263,9 +101,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             ps.controls = list("gaussian")),
                  "`ps.controls` must be a named list")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -274,9 +109,6 @@ test_that("`elasticHTE()` returns expected errors", {
                  "`ps.controls` must be a named list")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -285,9 +117,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             fixed = 0),
                  "`fixed` must be a logical")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -297,9 +126,6 @@ test_that("`elasticHTE()` returns expected errors", {
                  "`fixed` must be a logical")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -309,9 +135,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.pert = "a"),
                  "`n.pert` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -321,9 +144,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.pert = c(1, 2)),
                  "`n.pert` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -333,9 +153,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.pert = 0),
                  "`n.pert` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -345,9 +162,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.pert = -1L),
                  "`n.pert` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -358,9 +172,6 @@ test_that("`elasticHTE()` returns expected errors", {
                  "`n.pert` must be a positive integer")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -371,9 +182,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.boot = "a"),
                  "`n.boot` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -384,9 +192,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.boot = c(1, 2)),
                  "`n.boot` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -394,12 +199,9 @@ test_that("`elasticHTE()` returns expected errors", {
                             ps.controls = list("family" = "gaussian"),
                             fixed = TRUE,
                             n.pert = 10L,
-                            n.boot = 0),
+                            n.boot = -1),
                  "`n.boot` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -410,9 +212,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.boot = -1L),
                  "`n.boot` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -424,9 +223,6 @@ test_that("`elasticHTE()` returns expected errors", {
                  "`n.boot` must be a positive integer")
 
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -438,9 +234,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.gamma = "a"),
                  "`n.gamma` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -452,9 +245,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.gamma = c(1, 2)),
                  "`n.gamma` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -466,9 +256,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.gamma = 0),
                  "`n.gamma` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -480,9 +267,6 @@ test_that("`elasticHTE()` returns expected errors", {
                             n.gamma = -1L),
                  "`n.gamma` must be a positive integer")
     expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                            mainName = mainName,
-                            contName = contName,
-                            psName = psName,
                             thres.psi = 0.1,
                             sieve.degree = 2L,
                             outcome.type = "cont",
@@ -498,9 +282,11 @@ test_that("`elasticHTE()` returns expected errors", {
 test_that("`elasticHTE()` results in expected internal errors", {
 
   data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X 1", "X.1", "X3"))),
-                   "Y" = 1:10, "A" = 1:10)
-  data.rwe <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:10, "A" = 1:10)
+                   "Y" = 1:10, "A" = c(rep(0L, 5), rep(1L, 5)),
+                   mainName = c("X 1", "X.1", "X3"), contName = 1L, psName = 1L)
+  data.rwe <- list("X" = matrix(1, 100L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
+                   "Y" = 1:100, "A" = c(rep(0L, 50), rep(1L, 50)),
+                   mainName = c("X1", "X2", "X3"), contName = 1L, psName = 1L)
 
   expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
                paste("duplicate column headers found in X,",
@@ -508,24 +294,23 @@ test_that("`elasticHTE()` results in expected internal errors", {
                      "please eliminate spaces from column header names in `data.rct$X`"), fixed = TRUE)
 
   data.rwe <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X 1", "X.1", "X3"))),
-                   "Y" = 1:10, "A" = 1:10)
-  data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:10, "A" = 1:10)
+                   "Y" = 1:10, "A" = c(rep(0L, 5), rep(1L, 5)),
+                   mainName = c("X 1", "X.1", "X3"), contName = 1L, psName = 1L)
+  data.rct <- list("X" = matrix(1, 100L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
+                   "Y" = 1:100, "A" = c(rep(0L, 50), rep(1L, 50)),
+                   mainName = c("X1", "X2", "X3"), contName = 1L, psName = 1L)
 
-  expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe,
-                          psName.rwe = NULL, contName = "X3"),
+  expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
                paste("duplicate column headers found in X,",
                      "possibly due to required removal of spaces",
                      "please eliminate spaces from column header names in `data.rwe$X`"), fixed = TRUE)
-  data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:10, "A" = 1:10)
-  data.rwe <- list("X" = matrix(1, 10L, 2L, dimnames = list(NULL, c("X1", "X2"))),
-                   "Y" = 1:10, "A" = 1:10)
 
-  expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
-               "not all model covariates are found in provided data")
-  data.rwe <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:10, "A" = 1:10)
+  data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
+                   "Y" = 1:10, "A" = c(rep(0L, 5), rep(1L, 5)),
+                   mainName = c("X1", "X2", "X3"), contName = 1L, psName = 1L)
+  data.rwe <- list("X" = matrix(1, 100L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
+                   "Y" = 1:100, "A" = c(rep(0L, 50), rep(1L, 50)),
+                   mainName = c("X1", "X2", "X3"), contName = 1L, psName = 1L)
 
   data.rct$X[1L, 1L] <- NA_real_
   expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
@@ -557,56 +342,33 @@ test_that("`elasticHTE()` results in expected internal errors", {
                "elements of `data.rct` and `data.rwe` cannot contain missing values")
   data.rwe$A[1L] <- 0L
 
-  data.rwe$ps <- rep(1, 10)
+  data.rwe$ps <- rep(1, 100)
   expect_error(tryCatch(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
                         warning = function(e) {
                           expect_equal(e$message, "`ps` cannot be provided in `data.rwe`; input ignored")
                           data.rwe$ps <- NULL
-                          tryCatch(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
-                                   warning = function(e) {
-                                      expect_equal(e$message,
-                                                  paste("methods developed under the assumption that n >> m;",
-                                                        "requested analysis has m/n = 1"), fixed = TRUE)
-                                     suppressWarnings(elasticHTE(data.rct = data.rct, data.rwe = data.rwe))
-                                     })
+                          data.rwe$A <- c(rep(0L, 98), 1L, 2L)
+                          elasticHTE(data.rct = data.rct, data.rwe = data.rwe)
                           }),
            "more than 2 treatments found in data.rct$A and data.rwe$A", fixed = TRUE)
-  data.rct$A <- rep(0L, 10L)
+  data.rwe$A <- c(rep(0L, 50), rep(1L, 50))
+  data.rwe$ps <- NULL
 
-  data.rwe <- list("X" = matrix(1, 100, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:100, "A" = 1:100)
+  data.rct$A[1L] <- 2L
   expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe),
                "more than 2 treatments found in data.rct$A and data.rwe$A", fixed = TRUE)
-
-  data.rwe <- list("X" = matrix(1, 100, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:100, "A" = c(rep(0, 50), rep(1, 50)))
+  data.rct$A[1L] <- 0L
 
   expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe, outcome.type = "bin"),
                "`data.rct$Y` is not binary",
                fixed = TRUE)
 
-  data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = rep(0L, 10L), "A" = rep(0L, 10L))
-
-  data.rwe <- list("X" = matrix(1, 100, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:100, "A" = c(rep(2, 50), rep(3, 50)))
-
-  expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe, outcome.type = "bin"),
-               "more than 2 treatments found in data.rct$A and data.rwe$A", fixed = TRUE)
-
-  data.rwe <- list("X" = matrix(1, 100, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:100, "A" = c(rep(0, 50), rep(1, 50)))
-
+  data.rct$Y <- c(rep(0L, 5), rep(1L,  5))
   expect_error(elasticHTE(data.rct = data.rct, data.rwe = data.rwe, outcome.type = "bin"),
                "`data.rwe$Y` is not binary",
               fixed = TRUE)
 
-  data.rct <- list("X" = matrix(1, 10L, 3L, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = c(rep(1,5), rep(0,5)), "A" = c(rep(0L, 5L), rep(1L, 5L)))
-
-  data.rwe <- list("X" = matrix(1, 100, 3, dimnames = list(NULL, c("X1", "X2", "X3"))),
-                   "Y" = 1:100, "A" = c(rep(0, 50), rep(1, 50)))
-
+  data.rwe$Y <- c(rep(0L, 50), rep(1L,  50))
   tryCatch(elasticHTE(data.rct = data.rct, data.rwe = data.rwe, outcome.type = "cont"),
            message = function(m) {
              expect_equal(m$message,
@@ -648,7 +410,7 @@ test_that("`.elasticHTE()` returns expected results", {
     thres.psi <- sqrt(log(m))
 
     models <- list("RCT" = list("ME" = c("X1", "X2", "X3"), "PS" = c("X1", "X2", "X3")),
-                   "RWE" = list("ME" = c("X1", "X2", "X3"), "PS" = c("X1", "X2", "X3")),
+                   "RWE" = list("ME" = c("X1", "X2", "X3"), "PS" =  c("X1", "X2", "X3")),
                    sieve.degree = 2L,
                    outcome = list("method" = "glm", controls = list("family" = "gaussian")),
                    ps = list("method" = "glm", controls = list("family" = "quasibinomial")),
@@ -724,6 +486,14 @@ test_that("`.elasticHTE()` returns expected results", {
     class(obj) <- c("elasticHTE", class(obj))
 
   })
+
+  data.rct$mainName <- c("X1", "X2", "X3")
+  data.rct$contName <- c("X1", "X2", "X3")
+  data.rct$psName <- c("X1", "X2", "X3")
+
+  data.rwe$mainName <- c("X1", "X2", "X3")
+  data.rwe$contName <- c("X1", "X2", "X3")
+  data.rwe$psName <- c("X1", "X2", "X3")
 
   test_object <- withr::with_seed(2345L, elasticHTE(data.rct, data.rwe,
                                                     n.pert = 10, n.gamma = 10, n.boot = 10))
@@ -840,11 +610,15 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
 
   })
 
+  data.rct$mainName <- "X1"
+  data.rwe$mainName <- "X1"
+  data.rct$contName <- "X2"
+  data.rwe$contName <- "X2"
+  data.rct$psName <- "X3"
+  data.rwe$psName <- "X3"
+
   test_object <- withr::with_seed(2345L,
                                   elasticHTE(data.rct, data.rwe,
-                                             mainName.rct = "X1",
-                                             contName = "X2",
-                                             psName.rct = "X3",
                                              n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 
@@ -959,11 +733,15 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
 
   })
 
+  data.rct$mainName <- 1
+  data.rwe$mainName <- 1
+  data.rct$contName <- 1
+  data.rwe$contName <- 1
+  data.rct$psName <- 1
+  data.rwe$psName <- 1
+
   test_object <- withr::with_seed(2345L,
                                   elasticHTE(data.rct, data.rwe,
-                                             mainName.rct = 1,
-                                             contName = 1,
-                                             psName.rct = 1,
                                              n.pert = 10, n.gamma = 10, n.boot = 10))
   test_object$call <- NA
 

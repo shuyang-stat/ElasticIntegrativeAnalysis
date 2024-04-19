@@ -1,7 +1,7 @@
 #' Elastic Integrative Analysis for Heterogeneous Treatment Effect
 #'
 #'@description
-#' `elasticHTE()` is a test-based dynamic borrowing framework combining
+#' A test-based dynamic borrowing framework combining
 #'   a randomized clinical trial (RCT) and a real-world evidence (RWE) study,
 #'   in which a preliminary test statistic is used to gauge the comparability
 #'   and reliability of the RWE and to decide whether or not to use the RWE in
@@ -9,49 +9,43 @@
 #'   which quantifies how the treatment effect varies over the treatment
 #'   modifiers.
 #'
-#' @param data.rct A named list containing elements "X", "Y", and "A" for an RCT.
-#'   Element X is a numeric covariate matrix without an intercept.
-#'   Element Y is a binary or continuous response vector.
-#'   Element A is a binary treatment vector.
-#'   List can also contain element "ps", a vector of known propensity scores P(A=1).
-#' @param data.rwe A named list containing elements "X", "Y", and "A" for an RWE
-#'   study.
-#'   Element X is a numeric covariate matrix without an intercept.
-#'   Element Y is a binary or continuous response vector.
-#'   Element A is a binary treatment vector.
+#' Inputs \code{data.rct} and \code{data.rwe} are most easily specified using
+#'   the provided convenience function \code{dataInput()}. However, this is
+#'   not required. The value object returned by \code{dataInput()} is a
+#'   named list containing the following elements:
+#'   \itemize{
+#'     \item X is a numeric covariate matrix without an intercept. It must contain
+#'       all covariates required of the main effects, contrasts, and propensity
+#'       score models.
+#'     \item Y is a binary or continuous response vector.
+#'     \item A is a binary treatment vector.
+#'     \item mainName is an integer or a character vector. If a character vector,
+#'       the column headers of X defining the main effects component of the
+#'       outcome model. Note that an intercept is always assumed and should not be
+#'       provided. An intercept only model can be specified as \code{mainName = 1L}.
+#'     \item contName is an integer or a character vector. If a character vector,
+#'       the column headers of X defining Z used to estimate the treatment effect.
+#'       Note that an intercept is always assumed and should not be
+#'       provided. An intercept only model can be specified as \code{contName = 1L}.
+#'     \item psName is an integer or a character vector. If a character vector,
+#'       the column headers of X defining the propensity score model.
+#'       Note that an intercept is always assumed and should not be
+#'       provided. An intercept only model can be specified as \code{psName = 1L}.
+#'   }
+#'
+#' Note that element contName of \code{data.rct} and \code{data.rwe}
+#'   must be identical.
+#'
+#' @param data.rct The value object returned by \code{dataInput()} for the
+#'   data from a randomized clinical trial (RCT). See \link{dataInput} for
+#'   further details.
+#' @param data.rwe The value object returned by \code{dataInput()} for the
+#'   data from a real-world evidence (RWE) study. See \link{dataInput} for
+#'   further details.
 #' @param ... Ignored. Included to require named inputs.
-#' @param mainName.rct NULL, character vector, or an integer. The covariates of the
-#'   main effects component of the outcome model for the RCT data. If NULL, all covariates in
-#'   \code{data.rct$X} specify the model; if a character vector, the column
-#'   headers of \code{data.rct$X} to include in the model. Note that an
-#'   intercept is always included in the model; though it is not recommended,
-#'   an intercept only main effects model can be specified as \code{mainName.rct = 1}.
-#' @param mainName.rwe NULL, character vector, or an integer. The covariates of the
-#'   main effects component of the outcome model for the RWE data. If NULL, all covariates in
-#'   \code{data.rwe$X} specify the model; if a character vector, the column
-#'   headers of \code{data.rwe$X} to include in the model. Note that an
-#'   intercept is always included in the model; though it is not recommended,
-#'   an intercept only main effects model can be specified as \code{mainName.rwe = 1}.
-#' @param contName NULL, character vector, or an integer. The covariates of the
-#'   contrasts component of the outcome model. If NULL, all covariates in
-#'   \code{data.rct$X}  specify the model; if a character vector, the column
-#'   headers of \code{data.rct$X}  to include in the model. Note these are the
-#'   covariates that interact with the treatment variable (~ A:contName); an
-#'   intercept is always included, such that ~A is the minimal contrasts model;
-#'   though it is not recommended, an intercept only model can be specified as
-#'   \code{contName = 1}.
-#' @param psName.rct NULL, character vector, or an integer. The covariates of the
-#'   the propensity score model for the RCT data. If NULL, all covariates in \code{data.rct$X}
-#'   specify the model; if a character vector, the column headers of
-#'   \code{data.rct$X} to include in the model. Note that an intercept is
-#'   always included in the model; an intercept only model can be specified as
-#'   \code{psName.rct = 1}.
-#' @param psName.rwe NULL, character vector, or an integer. The covariates of the
-#'   the propensity score model for the RWE data. If NULL, all covariates in \code{data.rwe$X}
-#'   specify the model; if a character vector, the column headers of
-#'   \code{data.rwe$X} to include in the model. Note that an intercept is
-#'   always included in the model; an intercept only model can be specified as
-#'   \code{psName.rwe = 1}.
+#' @param ps.rct NULL or a numeric vector. Optional input providing a vector of
+#'   known propensity scores P(A=1) for the RCT dataset. If not provided,
+#'   it will be estimated using the model defined in \code{data.rct$psName}.
 #' @param thres.psi NULL or a scalar numeric. The threshold for constructing
 #'   adaptive confidence interval. STH QUESTION: Is there an allowed range we
 #'   should mention?
@@ -118,36 +112,42 @@
 #'     selection procedure.}
 #'
 #' @examples
+#' # Note that n.gamma and n.pert are smaller than recommended to accommodate
+#' # fast examples.
+#' #
 #' # load provided illustrative toy dataset with continuous outcome
 #' data("elasticToy.cont")
 #'
 #' # conduct the elastic integrative analysis with defaults
-#' \dontrun{
-#' result.cont <- elasticHTE(data.rct = elasticToy.cont.rct,
-#'                           data.rwe = elasticToy.cont.rwe)
-#' }
+#' result.cont <- elasticHTE(data.rct = dataInput(elasticToy.cont.rct,
+#'                                                outcome.model = Y ~ (X1+X2)*A,
+#'                                                ps.model = A ~ X1 + X2),
+#'                           data.rwe = dataInput(elasticToy.cont.rwe,
+#'                                                outcome.model = Y ~ (X1+X2)*A,
+#'                                                ps.model = A ~ X1 + X2),
+#'                           n.boot = 0L, n.gamma = 10L, n.pert = 10L)
+#'
 #' # load provided illustrative toy dataset with binary outcome
 #' data("elasticToy.bin")
 #'
 #' # conduct the elastic integrative analysis with defaults
-#' \dontrun{
-#' result.bin <- elasticHTE(data.rct = elasticToy.bin.rct,
-#'                          data.rwe = elasticToy.bin.rwe,
-#'                          outcome.type = "bin")
-#' }
+#' result.bin <- elasticHTE(data.rct = dataInput(elasticToy.bin.rct,
+#'                                               outcome.model = Y ~ (X1+X2)*A,
+#'                                               ps.model = A ~ X1 + X2),
+#'                          data.rwe = dataInput(elasticToy.bin.rwe,
+#'                                               outcome.model = Y ~ (X1+X2)*A,
+#'                                               ps.model = A ~ X1 + X2),
+#'                          outcome.type = "bin",
+#'                          n.boot = 0L, n.gamma = 10L, n.pert = 10L)
 #'
 #' @importFrom stats complete.cases
-#' @include bias.R bootFunc.R cGamma.R perturbationEst.R psiEst.R
+#' @include bias.R bootFunc.R cGamma.R dataInput.R perturbationEst.R psiEst.R
 #' @include sigma_matrices.R stopTests.R utils.R
 #' @export
 elasticHTE <- function(data.rct,
                        data.rwe,
                        ...,
-                       mainName.rct = NULL,
-                       mainName.rwe = mainName.rct,
-                       contName = NULL,
-                       psName.rct = NULL,
-                       psName.rwe = psName.rct,
+                       ps.rct = NULL,
                        thres.psi = NULL,
                        sieve.degree = 2L,
                        outcome.type = c("cont", "bin"),
@@ -163,35 +163,20 @@ elasticHTE <- function(data.rct,
   outcome.type <- match.arg(outcome.type)
   outcome.method <- match.arg(outcome.method)
   ps.method <- match.arg(ps.method)
-  mainName.rwe <- eval(mainName.rwe)
-  psName.rwe <- eval(psName.rwe)
 
   stopifnot(
-    "`data.rct` must be a named list containing elements 'X', 'Y', and 'A'" =
-      !missing(data.rct) &&
-      is.list(data.rct) && all(c("X", "Y", "A") %in% names(data.rct)),
-    "`data.rwe` must be a named list containing elements 'X', 'Y', and 'A'" =
-      !missing(data.rwe) &&
-      is.list(data.rwe) && all(c("X", "Y", "A") %in% names(data.rwe)),
-    "`data.rwe$X` and `data.rct$X` must be matrices with column names" =
-      {.isNamedNumericMatrix(data.rwe$X) || ncol(data.rwe$X) == 0L} &&
-      {.isNamedNumericMatrix(data.rct$X) || ncol(data.rwe$X) == 0L},
-    "`mainName.rct` must be a character vector of X column headers" = is.null(mainName.rct) ||
-      {.isNumericVector(mainName.rct, 1L) && isTRUE(all.equal(mainName.rct, 1))} ||
-      {.isCharacterVector(mainName.rct) && all(mainName.rct %in% colnames(data.rct$X))},
-    "`mainName.rwe` must be a character vector of X column headers" = is.null(mainName.rwe) ||
-      {.isNumericVector(mainName.rwe, 1L) && isTRUE(all.equal(mainName.rwe, 1))} ||
-      {.isCharacterVector(mainName.rwe) && all(mainName.rwe %in% colnames(data.rwe$X))},
-    "`contName` must be a character vector of X column headers" = is.null(contName) ||
-      {.isNumericVector(contName, 1L) && isTRUE(all.equal(contName, 1))} ||
-      {.isCharacterVector(contName) && all(contName %in% colnames(data.rct$X)) &&
-          all(contName %in% colnames(data.rwe$X))},
-    "`psName.rct` must be a character vector of X column headers" = is.null(psName.rct) ||
-      {.isNumericVector(psName.rct, 1L) && isTRUE(all.equal(psName.rct, 1))} ||
-      {.isCharacterVector(psName.rct) && all(psName.rct %in% colnames(data.rct$X))},
-    "`psName.rwe` must be a character vector of X column headers" = is.null(psName.rwe) ||
-      {.isNumericVector(psName.rwe, 1L) && isTRUE(all.equal(psName.rwe, 1))} ||
-      {.isCharacterVector(psName.rwe) && all(psName.rwe %in% colnames(data.rwe$X))},
+    "`data.rct` must be provided" = !missing(data.rct),
+    "`data.rwe` must be provided" = !missing(data.rwe)
+  )
+
+  .isDI(data.rct, "data.rct")
+  .isDI(data.rwe, "data.rwe")
+
+  stopifnot(
+    "`data.rct$contName` must match `data.rwe$contName`" =
+      isTRUE(all.equal(data.rct$contName, data.rwe$contName)),
+    "`ps.rct` must be NULL or a numeric vector of length = nrow(data.rct$X)" =
+      is.null(ps.rct) || .isNumericVector(ps.rct, nrow(data.rct$X)),
     "`thres.psi` must be a positive scalar" = is.null(thres.psi) ||
       {.isNumericVector(thres.psi, 1L) && thres.psi > 0.0},
     "`sieve.degree` must be a positive integer" = .isNumericVector(sieve.degree, 1L) &&
@@ -212,7 +197,7 @@ elasticHTE <- function(data.rct,
     "`n.pert` must be a positive integer" = .isNumericVector(n.pert, 1L) &&
       isTRUE(all.equal(n.pert, round(n.pert, 0L))) && n.pert > 0,
     "`n.boot` must be a positive integer" = .isNumericVector(n.boot, 1L) &&
-      isTRUE(all.equal(n.boot, round(n.boot, 0L))) && n.boot > 0,
+      isTRUE(all.equal(n.boot, round(n.boot, 0L))) && n.boot >= 0,
     "`n.gamma` must be a positive integer" = .isNumericVector(n.gamma, 1L) &&
       isTRUE(all.equal(n.gamma, round(n.gamma, 0L))) && n.gamma > 0
   )
@@ -226,11 +211,14 @@ elasticHTE <- function(data.rct,
   if (is.null(ps.controls$family)) ps.controls$family <- "quasibinomial"
 
   # NULL input means "all covariates in X"; integer input means "intercept only"
-  mainName.rct <- .adjustModelCoding(mainName.rct, colnames(data.rct$X))
-  mainName.rwe <- .adjustModelCoding(mainName.rwe, colnames(data.rwe$X))
-  contName <- .adjustModelCoding(contName, colnames(data.rct$X))
-  psName.rct <- .adjustModelCoding(psName.rct, colnames(data.rct$X))
-  psName.rwe <- .adjustModelCoding(psName.rwe, colnames(data.rwe$X))
+  mainName.rct <- .adjustModelCoding(data.rct$mainName, colnames(data.rct$X))
+  mainName.rwe <- .adjustModelCoding(data.rwe$mainName, colnames(data.rwe$X))
+  contName <- .adjustModelCoding(data.rct$contName, colnames(data.rct$X))
+  psName.rct <- .adjustModelCoding(data.rct$psName, colnames(data.rct$X))
+  psName.rwe <- .adjustModelCoding(data.rwe$psName, colnames(data.rwe$X))
+
+  data.rct[c("mainName", "contName", "psName")] <- NULL
+  data.rwe[c("mainName", "contName", "psName")] <- NULL
 
   # reduce dataset down to only those covariates used in models
   if (is.null(mainName.rct) && is.null(contName) && is.null(psName.rct)) {
@@ -244,7 +232,7 @@ elasticHTE <- function(data.rct,
            "data.rct: ", paste(colnames(data.rct$X), collapse = ", "), "\n\t", call. = FALSE)
     }
 
-    data.rct$X <- data.rct$X[, all_cov]
+    data.rct$X <- data.rct$X[, all_cov, drop = FALSE]
 
     # spaces in covariate names might cause issues later
     colnames(data.rct$X) <- .fixNames(colnames(data.rct$X))
@@ -273,7 +261,7 @@ elasticHTE <- function(data.rct,
            "data.rwe: ", paste(colnames(data.rwe$X), collapse = ", "), "\n\t", call. = FALSE)
     }
 
-    data.rwe$X <- data.rwe$X[, all_cov]
+    data.rwe$X <- data.rwe$X[, all_cov, drop = FALSE]
 
     # spaces in covariate names might cause issues later
     colnames(data.rwe$X) <- .fixNames(colnames(data.rwe$X))
@@ -290,6 +278,8 @@ elasticHTE <- function(data.rct,
            call. = FALSE)
     }
   }
+
+  data.rct$ps <- ps.rct
 
   # we do not allow for missing values
   if (any(!stats::complete.cases(data.rct$X, data.rct$Y, data.rct$A, data.rct$ps)) ||
@@ -431,18 +421,28 @@ elasticHTE <- function(data.rct,
                     V.eff = perm_result$V.eff,
                     n.rwe = n_rwe)
 
-  # returns a list containing CI.inf, CI.sup, and CI.settings
-  cis <- .bootFunc(mu1 = mu1,
-                   mu2 = mu2,
-                   c.gamma = nuispar$c.gamma,
-                   V.rt = perm_result$V.rt,
-                   sqrt.V.rt_eff = sqrt_V_rt_eff,
-                   sqrt.V.eff = perm_result$sqrt.V.eff,
-                   psi = psi_list$psi, ve = perm_result$V.est,
-                   psi.elastic = est_bias$elastic,
-                   n.rwe = n_rwe, n.boot = n.boot,
-                   thres.psi = thres.psi,
-                   Tstat = Tstat)
+  if (n.boot > 0L) {
+    # returns a list containing CI.inf, CI.sup, and CI.settings
+    cis <- .bootFunc(mu1 = mu1,
+                     mu2 = mu2,
+                     c.gamma = nuispar$c.gamma,
+                     V.rt = perm_result$V.rt,
+                     sqrt.V.rt_eff = sqrt_V_rt_eff,
+                     sqrt.V.eff = perm_result$sqrt.V.eff,
+                     psi = psi_list$psi, ve = perm_result$V.est,
+                     psi.elastic = est_bias$elastic,
+                     n.rwe = n_rwe, n.boot = n.boot,
+                     thres.psi = thres.psi,
+                     Tstat = Tstat)
+
+    cis$CIs.inf <- rbind(cis$CIs.inf,
+                         "elastic.debiased" = cis$CIs.inf["elastic", ])
+    cis$CIs.sup <- rbind(cis$CIs.sup,
+                         "elastic.debiased" = cis$CIs.sup["elastic", ])
+
+  } else {
+    cis <- list("CIs.inf" = NA_real_, "CIs.sup" = NA_real_)
+  }
 
   # getting things ready to be returned
   psi <- rbind(psi_list$psi,
@@ -452,11 +452,6 @@ elasticHTE <- function(data.rct,
               "elastic" = nuispar$V.elastic,
               "elastic.debiased" = nuispar$V.elastic)
   nuispar$V.elastic <- NULL
-
-  cis$CIs.inf <- rbind(cis$CIs.inf,
-                       "elastic.debiased" = cis$CIs.inf["elastic", ])
-  cis$CIs.sup <- rbind(cis$CIs.sup,
-                       "elastic.debiased" = cis$CIs.sup["elastic", ])
 
   obj <- c(list("call" = match.call(),
                 "psi" = psi, "ve" = ve,

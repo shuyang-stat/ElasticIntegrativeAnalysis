@@ -8,12 +8,18 @@ withr::with_seed(1234L, {
   beta <- stats::runif(p + 1L, -1.0,1.0)
   data.rct$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(n)
   data.rct$A <- stats::rbinom(n, 1, 0.4)
+  data.rct$mainName <- colnames(data.rct$X)
+  data.rct$psName <- colnames(data.rct$X)
+  data.rct$contName <- colnames(data.rct$X)
 
   data.rwe <- list()
   data.rwe$X <- matrix(stats::rnorm(m * p), m, p,
                        dimnames = list(NULL, paste0("X", 1L:p)))
   data.rwe$Y <- drop(data.rct$X %*% beta[-1L]) + beta[1L] + stats::rnorm(m)
   data.rwe$A <- stats::rbinom(m, 1, 0.35)
+  data.rwe$mainName <- colnames(data.rwe$X)
+  data.rwe$psName <- colnames(data.rwe$X)
+  data.rwe$contName <- colnames(data.rwe$X)
 })
 
 test_object <- withr::with_seed(2345L,

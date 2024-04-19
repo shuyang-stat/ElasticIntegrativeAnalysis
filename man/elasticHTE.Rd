@@ -10,11 +10,7 @@ elasticHTE(
   data.rct,
   data.rwe,
   ...,
-  mainName.rct = NULL,
-  mainName.rwe = mainName.rct,
-  contName = NULL,
-  psName.rct = NULL,
-  psName.rwe = psName.rct,
+  ps.rct = NULL,
   thres.psi = NULL,
   sieve.degree = 2L,
   outcome.type = c("cont", "bin"),
@@ -33,56 +29,19 @@ elasticHTE(
 \method{summary}{elasticHTE}(object, ...)
 }
 \arguments{
-\item{data.rct}{A named list containing elements "X", "Y", and "A" for an RCT.
-Element X is a numeric covariate matrix without an intercept.
-Element Y is a binary or continuous response vector.
-Element A is a binary treatment vector.
-List can also contain element "ps", a vector of known propensity scores P(A=1).}
+\item{data.rct}{The value object returned by \code{dataInput()} for the
+data from a randomized clinical trial (RCT). See \link{dataInput} for
+further details.}
 
-\item{data.rwe}{A named list containing elements "X", "Y", and "A" for an RWE
-study.
-Element X is a numeric covariate matrix without an intercept.
-Element Y is a binary or continuous response vector.
-Element A is a binary treatment vector.}
+\item{data.rwe}{The value object returned by \code{dataInput()} for the
+data from a real-world evidence (RWE) study. See \link{dataInput} for
+further details.}
 
 \item{...}{Ignored}
 
-\item{mainName.rct}{NULL, character vector, or an integer. The covariates of the
-main effects component of the outcome model for the RCT data. If NULL, all covariates in
-\code{data.rct$X} specify the model; if a character vector, the column
-headers of \code{data.rct$X} to include in the model. Note that an
-intercept is always included in the model; though it is not recommended,
-an intercept only main effects model can be specified as \code{mainName.rct = 1}.}
-
-\item{mainName.rwe}{NULL, character vector, or an integer. The covariates of the
-main effects component of the outcome model for the RWE data. If NULL, all covariates in
-\code{data.rwe$X} specify the model; if a character vector, the column
-headers of \code{data.rwe$X} to include in the model. Note that an
-intercept is always included in the model; though it is not recommended,
-an intercept only main effects model can be specified as \code{mainName.rwe = 1}.}
-
-\item{contName}{NULL, character vector, or an integer. The covariates of the
-contrasts component of the outcome model. If NULL, all covariates in
-\code{data.rct$X}  specify the model; if a character vector, the column
-headers of \code{data.rct$X}  to include in the model. Note these are the
-covariates that interact with the treatment variable (~ A:contName); an
-intercept is always included, such that ~A is the minimal contrasts model;
-though it is not recommended, an intercept only model can be specified as
-\code{contName = 1}.}
-
-\item{psName.rct}{NULL, character vector, or an integer. The covariates of the
-the propensity score model for the RCT data. If NULL, all covariates in \code{data.rct$X}
-specify the model; if a character vector, the column headers of
-\code{data.rct$X} to include in the model. Note that an intercept is
-always included in the model; an intercept only model can be specified as
-\code{psName.rct = 1}.}
-
-\item{psName.rwe}{NULL, character vector, or an integer. The covariates of the
-the propensity score model for the RWE data. If NULL, all covariates in \code{data.rwe$X}
-specify the model; if a character vector, the column headers of
-\code{data.rwe$X} to include in the model. Note that an intercept is
-always included in the model; an intercept only model can be specified as
-\code{psName.rwe = 1}.}
+\item{ps.rct}{NULL or a numeric vector. Optional input providing a vector of
+known propensity scores P(A=1) for the RCT dataset. If not provided,
+it will be estimated using the model defined in \code{data.rct$psName}.}
 
 \item{thres.psi}{NULL or a scalar numeric. The threshold for constructing
 adaptive confidence interval. STH QUESTION: Is there an allowed range we
@@ -166,13 +125,40 @@ p-value as well as a list of the settings used in the
 selection procedure.}
 }
 \description{
-\code{elasticHTE()} is a test-based dynamic borrowing framework combining
+A test-based dynamic borrowing framework combining
 a randomized clinical trial (RCT) and a real-world evidence (RWE) study,
 in which a preliminary test statistic is used to gauge the comparability
 and reliability of the RWE and to decide whether or not to use the RWE in
 an integrative analysis. The parameter of interest is \eqn{\psi}{`psi`},
 which quantifies how the treatment effect varies over the treatment
 modifiers.
+
+Inputs \code{data.rct} and \code{data.rwe} are most easily specified using
+the provided convenience function \code{dataInput()}. However, this is
+not required. The value object returned by \code{dataInput()} is a
+named list containing the following elements:
+\itemize{
+\item X is a numeric covariate matrix without an intercept. It must contain
+all covariates required of the main effects, contrasts, and propensity
+score models.
+\item Y is a binary or continuous response vector.
+\item A is a binary treatment vector.
+\item mainName is an integer or a character vector. If a character vector,
+the column headers of X defining the main effects component of the
+outcome model. Note that an intercept is always assumed and should not be
+provided. An intercept only model can be specified as \code{mainName = 1L}.
+\item contName is an integer or a character vector. If a character vector,
+the column headers of X defining Z used to estimate the treatment effect.
+Note that an intercept is always assumed and should not be
+provided. An intercept only model can be specified as \code{contName = 1L}.
+\item psName is an integer or a character vector. If a character vector,
+the column headers of X defining the propensity score model.
+Note that an intercept is always assumed and should not be
+provided. An intercept only model can be specified as \code{psName = 1L}.
+}
+
+Note that element contName of \code{data.rct} and \code{data.rwe}
+must be identical.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -182,22 +168,32 @@ modifiers.
 
 }}
 \examples{
+# Note that n.gamma and n.pert are smaller than recommended to accommodate
+# fast examples.
+#
 # load provided illustrative toy dataset with continuous outcome
 data("elasticToy.cont")
 
 # conduct the elastic integrative analysis with defaults
-\dontrun{
-result.cont <- elasticHTE(data.rct = elasticToy.cont.rct,
-                          data.rwe = elasticToy.cont.rwe)
-}
+result.cont <- elasticHTE(data.rct = dataInput(elasticToy.cont.rct,
+                                               outcome.model = Y ~ (X1+X2)*A,
+                                               ps.model = A ~ X1 + X2),
+                          data.rwe = dataInput(elasticToy.cont.rwe,
+                                               outcome.model = Y ~ (X1+X2)*A,
+                                               ps.model = A ~ X1 + X2),
+                          n.boot = 0L, n.gamma = 10L, n.pert = 10L)
+
 # load provided illustrative toy dataset with binary outcome
 data("elasticToy.bin")
 
 # conduct the elastic integrative analysis with defaults
-\dontrun{
-result.bin <- elasticHTE(data.rct = elasticToy.bin.rct,
-                         data.rwe = elasticToy.bin.rwe,
-                         outcome.type = "bin")
-}
+result.bin <- elasticHTE(data.rct = dataInput(elasticToy.bin.rct,
+                                              outcome.model = Y ~ (X1+X2)*A,
+                                              ps.model = A ~ X1 + X2),
+                         data.rwe = dataInput(elasticToy.bin.rwe,
+                                              outcome.model = Y ~ (X1+X2)*A,
+                                              ps.model = A ~ X1 + X2),
+                         outcome.type = "bin",
+                         n.boot = 0L, n.gamma = 10L, n.pert = 10L)
 
 }
