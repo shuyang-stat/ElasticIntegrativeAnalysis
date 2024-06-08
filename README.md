@@ -103,6 +103,6 @@ result.bin <- elasticHTE(data.rct = dataInput(elasticToy.bin.rct,
 In your R console
 
 <pre>
-library(devtools)
+library(remotes)
 install_github("sth1402/ElasticIntegrative")
 </pre>
