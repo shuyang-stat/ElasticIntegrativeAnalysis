@@ -145,16 +145,7 @@ test_that("`.bias()` return expected results", {
                 "elastic.2" = 2.15,
                 "elastic.3" = 3.15)
 
-  biastemp <- -stats::pchisq(stats::qchisq(0.8, df = 3L),
-                             df = 5L, ncp = 0.14) * c(0.3, 0.3, 0.3)
-
-  est_elas_debiased <- est_elas - drop(biastemp) / 10.0
-  names(est_elas_debiased) <- c("elastic.1.debiased",
-                                "elastic.2.debiased",
-                                "elastic.3.debiased")
-
-  expected <- list("elastic" = est_elas,
-                   "elastic.debiased" = est_elas_debiased)
+  expected <- est_elas
 
   expect_equal(do.call(".bias", args), expected)
 
@@ -173,14 +164,7 @@ test_that("`.bias()` return expected results", {
 
   est_elas <- c("elastic.1" = 1.15)
 
-  biastemp <- -stats::pchisq(stats::qchisq(c(0.8), df = 1),
-                             df = 3L, ncp = 0.01) * c(0.05)
-
-  est_elas_debiased <- est_elas - drop(biastemp) / 10.0
-  names(est_elas_debiased) <- c("elastic.1.debiased")
-
-  expected <- list("elastic" = est_elas,
-                   "elastic.debiased" = est_elas_debiased)
+  expected <- est_elas
 
   expect_equal(do.call(".bias", args), expected)
 

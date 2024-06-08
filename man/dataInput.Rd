@@ -2,7 +2,7 @@
 % Please edit documentation in R/dataInput.R
 \name{dataInput}
 \alias{dataInput}
-\title{Convenience Function to Prepare Required Data Inputs to \code{IntHTEcf()}}
+\title{Prepare Required Data Inputs to \code{elasticHTE()}}
 \usage{
 dataInput(data, outcome.model, ps.model)
 }
@@ -12,42 +12,37 @@ the treatment and all model covariates.}
 
 \item{outcome.model}{A formula object. Must be of the form LHS ~ RHS. The
 LHS is the outcome of interest. The RHS defines the main effects model and
-the Z covariates of the treatment effect function. For example, for outcome,
-Y, treatment A, and covariates X1, X2, \code{outcome.model = Y ~ X1 + X2*A}
-sets the design matrix of the main effects model as (1, X1, X2) and the
-Z of the HTE function as (1, X2). Note that smoothing splines will
-automatically be applied for regression method "gam" and should not
-be specified here.}
+the Z covariates of the treatment effect function; i.e., of the form
+LHS ~ main_effects + treatment_variable * Z.}
 
 \item{ps.model}{A formula object. Must be of the form LHS ~ RHS. The
-LHS is the treatment variable. The RHS defines the propensity score model.
-Note that smoothing splines will
-automatically be applied for regression method "gam" and should not
-be specified here.}
+LHS is the treatment variable. The RHS defines the propensity score model.}
 }
 \value{
-A list object appropriately formatted for use in \code{IntHTEcf()}.
+A list object appropriately formatted for use in \code{elasticHTE()}.
 \itemize{
-\item \code{X} is a numeric covariate matrix without an intercept. It must contain
-all covariates required of the main effects, contrasts, and propensity
+\item \code{X}: The covariate matrix excluding an intercept. It
+contains all covariates required of the outcome and propensity
 score models.
-\item \code{Y} is a binary or continuous response vector.
-\item \code{A} is a binary treatment vector.
-\item \code{mainName} is an integer or a character vector. If a character vector,
-the column headers of X defining the main effects component of the
-outcome model. Note that an intercept is always assumed and should not be
-provided. An intercept only model can be specified as \code{mainName = 1L}.
-\item \code{contName} is an integer or a character vector. If a character vector,
-the column headers of X defining Z used to estimate the treatment effect.
-Note that an intercept is always assumed and should not be
-provided. An intercept only model can be specified as \code{contName = 1L}.
-\item \code{psName} is an integer or a character vector. If a character vector,
-the column headers of X defining the propensity score model.
-Note that an intercept is always assumed and should not be
-provided. An intercept only model can be specified as \code{psName = 1L}.
+\item \code{Y} The response vector.
+\item \code{A} The treatment vector.
+\item \code{mainName} The column headers of X defining the main effects
+component of the outcome model or 1, indicating an intercept-only model.
+\item \code{contName} The column headers of X defining Z or 1, indicating
+an intercept-only model.
+\item \code{psName} The column headers of X defining the propensity score
+model or 1, indicating an intercept-only model.
 }
 }
 \description{
 Provided a data.frame and models for the outcome and propensity regressions,
-generates an list of the format required by \code{IntHTEcf()}.
+generates an list of the format required by \code{elasticHTE()}.
+}
+\examples{
+data("elasticToy.cont")
+
+data_object <- dataInput(elasticToy.cont.rct,
+                         outcome.model = Y ~ X1 + X2 * A,
+                         ps.model = A ~ X1 * X2)
+
 }

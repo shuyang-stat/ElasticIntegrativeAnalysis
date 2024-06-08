@@ -13,8 +13,7 @@
 #' @param V.eff A numeric matrix. The variance of psi.eff
 #' @param n.rwe An integer. The number of participants in RWE
 #'
-#' @returns A list object containing the estimated elastic parameters and
-#'   the estimated elastic parameters adjusted for bias.
+#' @returns A named numeric vector - the estimated elastic parameters
 #'
 #' @importFrom stats pchisq qchisq
 #' @keywords internal
@@ -50,9 +49,5 @@
   biastemp <- -stats::pchisq(stats::qchisq(1.0 - gamma, df = n_cov),
                             df = n_cov + 2L, ncp = crossprod(mu1)) * V.eff %*% eta
 
-  est_elas_debiased <- est_elas - drop(biastemp) / sqrt(n.rwe)
-  names(est_elas_debiased) <- paste0("elastic.", seq_len(n_cov), ".debiased")
-
-  list("elastic" = est_elas,
-       "elastic.debiased" = est_elas_debiased)
+  est_elas
 }

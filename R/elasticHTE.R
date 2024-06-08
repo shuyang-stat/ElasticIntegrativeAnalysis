@@ -9,46 +9,34 @@
 #'   which quantifies how the treatment effect varies over the treatment
 #'   modifiers.
 #'
+#'@details
 #' Inputs \code{data.rct} and \code{data.rwe} are most easily specified using
-#'   the provided convenience function \code{dataInput()}. However, this is
-#'   not required. The value object returned by \code{dataInput()} is a
-#'   named list containing the following elements:
-#'   \itemize{
-#'     \item X is a numeric covariate matrix without an intercept. It must contain
-#'       all covariates required of the main effects, contrasts, and propensity
-#'       score models.
-#'     \item Y is a binary or continuous response vector.
-#'     \item A is a binary treatment vector.
-#'     \item mainName is an integer or a character vector. If a character vector,
-#'       the column headers of X defining the main effects component of the
-#'       outcome model. Note that an intercept is always assumed and should not be
-#'       provided. An intercept only model can be specified as \code{mainName = 1L}.
-#'     \item contName is an integer or a character vector. If a character vector,
-#'       the column headers of X defining Z used to estimate the treatment effect.
-#'       Note that an intercept is always assumed and should not be
-#'       provided. An intercept only model can be specified as \code{contName = 1L}.
-#'     \item psName is an integer or a character vector. If a character vector,
-#'       the column headers of X defining the propensity score model.
-#'       Note that an intercept is always assumed and should not be
-#'       provided. An intercept only model can be specified as \code{psName = 1L}.
-#'   }
+#'   the provided convenience function \link{dataInput}(). However, this is
+#'   not required. See \link{dataInput}() for details of the returned
+#'   object.
 #'
-#' Note that element contName of \code{data.rct} and \code{data.rwe}
-#'   must be identical.
+#'@note
+#'   When specifying \code{outcome.controls} and \code{ps.controls}, some
+#'   input arguments cannot be accessed. Specifically, formal arguments
+#'   \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} of
+#'   \code{SuperLearner::SuperLearner()} and \code{formula}, \code{data}, and
+#'   \code{weights} of \code{stats::glm()} cannot be set through these inputs.
 #'
 #' @param data.rct The value object returned by \code{dataInput()} for the
 #'   data from a randomized clinical trial (RCT). See \link{dataInput} for
 #'   further details.
 #' @param data.rwe The value object returned by \code{dataInput()} for the
 #'   data from a real-world evidence (RWE) study. See \link{dataInput} for
-#'   further details.
+#'   further details. Note that the treatment effect model must be identical
+#'   to that of \code{data.rct}.
 #' @param ... Ignored. Included to require named inputs.
 #' @param ps.rct NULL or a numeric vector. Optional input providing a vector of
 #'   known propensity scores P(A=1) for the RCT dataset. If not provided,
 #'   it will be estimated using the model defined in \code{data.rct$psName}.
 #' @param thres.psi NULL or a scalar numeric. The threshold for constructing
-#'   adaptive confidence interval. STH QUESTION: Is there an allowed range we
-#'   should mention?
+#'   adaptive confidence intervals. If NULL, a default value of
+#'   \eqn{\sqrt{\log(n)}}{sqrt(log(n))}, where n is the number of participants
+#'   in \code{data.rwe}, is used.
 #' @param sieve.degree A positive integer > 1. The order of the polynomial
 #'   defining the sieve model. For example, `sieve.degree = 2` yields outcome and
 #'   propensity models that include all covariates, the squared covariates, and
@@ -56,36 +44,29 @@
 #' @param outcome.type A character. The type of outcome. Must be one of
 #'   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
 #' @param outcome.method A character. The regression method for outcomes.
-#'   Must be one of \{'glm', 'SL'\}
+#'   Must be one of \{"glm", "SL"\}. The outcome is modeled without adjustment,
+#'   so method and family must be appropriate for the outcome.type.
 #' @param outcome.controls A named list. Additional inputs provided to
 #'   \code{stats::glm()} or
 #'   \code{SuperLearner::SuperLearner()} for the outcome regression analyses.
 #'   Element names must match the formal arguments of \code{stats::glm()} or
 #'   \code{SuperLearner::SuperLearner()} and should include, at a minimum,
-#'   elements "family" (specifying the error distribution). Please see documentation
-#'   of \code{stats::glm()} or\code{SuperLearner::SuperLearner()} for additional
-#'   input options. Note that for \code{SuperLearner::SuperLearner()},
-#'   formal arguments \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} are
-#'   set internally and should not be provided here. Similarly, for \code{stats::glm()}
-#'   input \code{formula}, \code{data}, and \code{weights} cannot be set through input.
+#'   element "family". Please see ?stats::glm or ?SuperLearner::SuperLearner
+#'   for additional input options.
 #' @param ps.method A character. The regression method for propensity score
-#'   analysis. Must be one of \{'glm', 'SL'\}
+#'   analysis. Must be one of \{"glm", "SL"\}.
 #' @param ps.controls A named list. Additional inputs provided to
 #'   \code{stats::glm()} or
-#'   \code{SuperLearner::SuperLearner()} for the outcome regression analyses.
+#'   \code{SuperLearner::SuperLearner()} for the propensity score regression analyses.
 #'   Element names must match the formal arguments of \code{stats::glm()} or
 #'   \code{SuperLearner::SuperLearner()} and should include, at a minimum,
-#'   elements "family" (specifying the error distribution). Please see documentation
-#'   of \code{stats::glm()} or\code{SuperLearner::SuperLearner()} for additional
-#'   input options. Note that for \code{SuperLearner::SuperLearner()},
-#'   formal arguments \code{Y}, \code{X}, \code{newX}, and  \code{obsWeight} are
-#'   set internally and should not be provided here. Similarly, for \code{stats::glm()}
-#'   input \code{formula}, \code{data}, and \code{weights} cannot be set through input.
+#'   element "family". Please see ?stats::glm or ?SuperLearner::SuperLearner
+#'   for additional input options.
 #' @param fixed A logical. How to select the tuning parameter
 #'   \eqn{c_{\gamma}}{c_gamma}. FALSE, the default, selects an adaptive
 #'   selection strategy; TRUE selects a fixed threshold strategy.
 #'   The default fixed threshold is \code{stats::qchisq(0.95, df = p)},
-#'   in which p is the dimension of the contrasts model.
+#'   in which p is the dimension of the treatment effect model.
 #' @param n.pert An integer. The number of perturbations to generate when
 #'   estimating the variance.
 #' @param n.boot An integer. The number of bootstrap samples to generate
@@ -96,20 +77,20 @@
 #'   \item{psi }{A matrix containing the estimated \eqn{\psi}{`psi`} associated
 #'     with the treatment modifiers under various models
 #'     (\eqn{\psi_p}{`psi_p`}, \eqn{\psi_{eff}}{`psi_eff`}, \eqn{\psi_{rt}}{`psi_rt`},
-#'     \eqn{\psi_{elastic}}{`psi_elastic`},
-#'     \eqn{\psi_{elastic.debiased}}{`psi_elastic.debiased`}).}
+#'     and \eqn{\psi_{elastic}}{`psi_elastic`}).}
 #'   \item{ve }{A matrix containing the estimated standard error for
 #'     \eqn{\psi}{`psi`}.}
 #'   \item{CIs.inf, CIs.sup }{A matrix containing the estimated confidence
 #'     intervals for \eqn{\psi}{`psi`}.}
-#'   \item{conservative }{A logical \eqn{I(Tstat < thres.psi)}{I(Tstat < thres.psi)} }
 #'   \item{CI.settings }{A list of the settings used in the confidence interval
 #'     procedure.}
+#'   \item{Tstat }{The estimated test statistic.}
+#'   \item{conservative }{A logical \eqn{I(Tstat < thres.psi)}{I(Tstat < thres.psi)} }
 #'   \item{nuispar }{A list providing the selected \eqn{\gamma}{gamma} and
 #'     its corresponding threshold value \eqn{c_{\gamma}}{c.gamma};
 #'     indicator \eqn{I(c_{\gamma}  > Tstat)}{I(c.gamma > Tstat)} and its
-#'     p-value as well as a list of the settings used in the
-#'     selection procedure.}
+#'     p-value; eta, where \eqn{Tstat = \eta^T \eta}{Tstat = eta^T eta};
+#'     and a list of the settings used in the selection procedure.}
 #'
 #' @examples
 #' # Note that n.gamma and n.pert are smaller than recommended to accommodate
@@ -147,18 +128,18 @@
 elasticHTE <- function(data.rct,
                        data.rwe,
                        ...,
-                       ps.rct = NULL,
-                       thres.psi = NULL,
-                       sieve.degree = 2L,
                        outcome.type = c("cont", "bin"),
+                       ps.rct = NULL,
+                       sieve.degree = 2L,
                        outcome.method = c("glm", "SL"),
                        outcome.controls = list("family" = "gaussian"),
                        ps.method = c("glm", "SL"),
                        ps.controls = list("family" = "quasibinomial"),
-                       fixed = FALSE,
                        n.pert = 100L,
+                       fixed = FALSE,
+                       n.gamma = 1000L,
                        n.boot = 100L,
-                       n.gamma = 1000L) {
+                       thres.psi = NULL) {
 
   outcome.type <- match.arg(outcome.type)
   outcome.method <- match.arg(outcome.method)
@@ -169,6 +150,7 @@ elasticHTE <- function(data.rct,
     "`data.rwe` must be provided" = !missing(data.rwe)
   )
 
+  # ensure that provided data match expected structure
   .isDI(data.rct, "data.rct")
   .isDI(data.rwe, "data.rwe")
 
@@ -179,7 +161,7 @@ elasticHTE <- function(data.rct,
       is.null(ps.rct) || .isNumericVector(ps.rct, nrow(data.rct$X)),
     "`thres.psi` must be a positive scalar" = is.null(thres.psi) ||
       {.isNumericVector(thres.psi, 1L) && thres.psi > 0.0},
-    "`sieve.degree` must be a positive integer" = .isNumericVector(sieve.degree, 1L) &&
+    "`sieve.degree` must be a positive integer > 1" = .isNumericVector(sieve.degree, 1L) &&
       isTRUE(all.equal(sieve.degree, round(sieve.degree, 0L))) && sieve.degree > 1,
     "`outcome.type` must be one of {'cont', 'bin'}" = .isCharacterVector(outcome.type, 1L) &&
       outcome.type %in% c("cont", "bin"),
@@ -202,12 +184,14 @@ elasticHTE <- function(data.rct,
       isTRUE(all.equal(n.gamma, round(n.gamma, 0L))) && n.gamma > 0
   )
 
+  # set default family values based on outcome type if not provided
   if (is.null(outcome.controls$family)) {
     outcome.controls$family <- switch(outcome.type,
                                       "cont" = "gaussian",
                                       "bin" = "quasibinomial")
   }
 
+  # set default family value for propensity model if not provided
   if (is.null(ps.controls$family)) ps.controls$family <- "quasibinomial"
 
   # NULL input means "all covariates in X"; integer input means "intercept only"
@@ -217,18 +201,22 @@ elasticHTE <- function(data.rct,
   psName.rct <- .adjustModelCoding(data.rct$psName, colnames(data.rct$X))
   psName.rwe <- .adjustModelCoding(data.rwe$psName, colnames(data.rwe$X))
 
+  # remove these from the data.objects to conform to original
+  # expectations
   data.rct[c("mainName", "contName", "psName")] <- NULL
   data.rwe[c("mainName", "contName", "psName")] <- NULL
 
   # reduce dataset down to only those covariates used in models
   if (is.null(mainName.rct) && is.null(contName) && is.null(psName.rct)) {
+    # if all are null, intercept only models are requested
     data.rct$X <- matrix(NA, nrow(data.rct$X), 0L)
-  } else if (!is.null(mainName.rct) || !is.null(contName) || !is.null(psName.rct)) {
+  } else {
+    # only need one copy of the covariates
     all_cov <- unique(c(mainName.rct, contName, psName.rct))
 
     if (!all(all_cov %in% colnames(data.rct$X))) {
       stop("not all model covariates are found in provided data\n\t",
-           "model covariate: ", paste(all_cov, collapse = ", "), "\n\t",
+           "model covariates: ", paste(all_cov, collapse = ", "), "\n\t",
            "data.rct: ", paste(colnames(data.rct$X), collapse = ", "), "\n\t", call. = FALSE)
     }
 
@@ -251,14 +239,17 @@ elasticHTE <- function(data.rct,
   }
 
   if (is.null(mainName.rwe) && is.null(contName) && is.null(psName.rwe)) {
+    # if all are null, intercept only models are requested
     data.rwe$X <- matrix(NA, nrow(data.rwe$X), 0L)
-  } else if (!is.null(mainName.rwe) || !is.null(contName) || !is.null(psName.rwe)) {
+  } else {
+    # only need one copy of the covariates
     all_cov <- unique(c(mainName.rwe, contName, psName.rwe))
 
     if (!all(all_cov %in% colnames(data.rwe$X))) {
       stop("not all model covariates are found in provided data\n\t",
            "model covariate: ", paste(all_cov, collapse = ", "), "\n\t",
-           "data.rwe: ", paste(colnames(data.rwe$X), collapse = ", "), "\n\t", call. = FALSE)
+           "data.rwe: ", paste(colnames(data.rwe$X), collapse = ", "), "\n\t",
+           call. = FALSE)
     }
 
     data.rwe$X <- data.rwe$X[, all_cov, drop = FALSE]
@@ -409,15 +400,13 @@ elasticHTE <- function(data.rct,
                      Tstat1 = Tstat,
                      n.rwe = n_rwe,
                      fixed = fixed)
-  nuispar$eta <- perm_result$eta
 
-  # a list object is returned with elements elastic and elastic.debiased
   est_bias <- .bias(Icomb = nuispar$Icomb,
                     psi.rt = psi_list$psi["rt", ],
                     psi.eff = psi_list$psi["eff", ],
                     mu1 = mu1,
                     gamma = nuispar$gamma,
-                    eta = nuispar$eta,
+                    eta = perm_result$eta,
                     V.eff = perm_result$V.eff,
                     n.rwe = n_rwe)
 
@@ -430,28 +419,21 @@ elasticHTE <- function(data.rct,
                      sqrt.V.rt_eff = sqrt_V_rt_eff,
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
-                     psi.elastic = est_bias$elastic,
+                     psi.elastic = est_bias,
                      n.rwe = n_rwe, n.boot = n.boot,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
-
-    cis$CIs.inf <- rbind(cis$CIs.inf,
-                         "elastic.debiased" = cis$CIs.inf["elastic", ])
-    cis$CIs.sup <- rbind(cis$CIs.sup,
-                         "elastic.debiased" = cis$CIs.sup["elastic", ])
-
   } else {
     cis <- list("CIs.inf" = NA_real_, "CIs.sup" = NA_real_)
   }
 
   # getting things ready to be returned
   psi <- rbind(psi_list$psi,
-               "elastic" = est_bias$elastic,
-               "elastic.debiased" = est_bias$elastic.debiased)
+               "elastic" = est_bias)
   ve <- rbind(perm_result$V.est,
-              "elastic" = nuispar$V.elastic,
-              "elastic.debiased" = nuispar$V.elastic)
+              "elastic" = nuispar$V.elastic)
   nuispar$V.elastic <- NULL
+  nuispar$eta <- {perm_result$eta %*% Sigma_SS_matrices$sqrt.inv.Sigma.SS} |> drop()
 
   obj <- c(list("call" = match.call(),
                 "psi" = psi, "ve" = ve,

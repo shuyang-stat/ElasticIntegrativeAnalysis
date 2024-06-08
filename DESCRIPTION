@@ -1,13 +1,17 @@
 Package: ElasticIntegrative
 Title: Elastic Integrative Analyses for the Heterogenous Treatment Effect 
   Combining a Randomized Trial and a Real-World Evidence Study
-Version: 0.2
-Date: 2024-01-17
+Version: 1.0
+Date: 2024-06-08
 Authors@R: c(
     person("Shu", "Yang", , "syang24@ncsu.edu", role = c("aut")),
     person("Chenyin", "Gao", , "cgao6@ncsu.edu", role = c("aut")),
     person("Shannon", "Holloway", , "shannon.t.holloway@gmail.com", role = c("aut", "cre"))
     )
+Author: Shu Yang [aut],
+    Chenyin Gao [aut],
+    Shannon Holloway [aut, cre]
+Maintainer: Shannon Holloway <shannon.t.holloway@gmail.com>
 Description: Elastic integrative analyses for the heterogenous treatment effect 
   combining a randomized trial and a real-world evidence study. When the 
   real-world evidence data are not subject o bias, the approach combines the 
@@ -28,23 +32,25 @@ Imports:
     SuperLearner
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    withr
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
 LazyData: true
 Collate: 
+    'stopTests.R'
+    'HTE.R'
     'bias.R'
     'bootFunc.R'
     'cGamma.R'
     'dataInput.R'
     'utils.R'
-    'stopTests.R'
     'sigma_matrices.R'
+    'scores.R'
     'sieveEstimator.R'
     'propensityScore.R'
     'outcome.R'
-    'scores.R'
     'psiEst.R'
     'perturbationEst.R'
     'elasticHTE.R'

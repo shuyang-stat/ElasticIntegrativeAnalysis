@@ -1,10 +1,8 @@
 #' Calculate Sigma Matrix
 #'
 #' @noRd
-#' @param V.rt A numeric matrix. The variance of psi_rt currently
-#'   estimated using perturbation-based resampling.
-#' @param V.eff A numeric matrix. The variance of the psi_eff currently
-#'   estimated using perturbation-based resampling.
+#' @param V.rt A numeric matrix. The variance of psi_rt.
+#' @param V.eff A numeric matrix. The variance of the psi_eff.
 #' @param rho A numeric object. The ratio of the number of participants
 #'   n.rct / n.rwe.
 #'
@@ -12,6 +10,7 @@
 #'   sqrt.inv.Sigma.SS, and sqrt.Sigma.SS
 #'
 #' @importFrom MASS ginv
+#' @importFrom expm sqrtm
 #' @keywords internal
 .calculateSigmaSSMatrices <- function(V.rt, V.eff, rho) {
 
@@ -45,7 +44,7 @@
   # {p x p}
   inv_I_rt <- tryCatch(MASS::ginv(I_rt),
                        error = function(e) {
-                         stop("unable to invert variance I_rt\n\t",
+                         stop("unable to invert Fisher information matrix for S_rt\n\t",
                               e$message, call. = FALSE)
                        })
 
@@ -81,7 +80,6 @@
   if (any(abs(Im(sqrt_inv_Sigma_SS)) > 1e-6)) {
     warning("sqrtm returned complex matrix; only real component used", call. = FALSE)
   }
-
   sqrt_inv_Sigma_SS <- Re(sqrt_inv_Sigma_SS)
 
   list("sqrt.Sigma.SS" = sqrt_Sigma_SS,

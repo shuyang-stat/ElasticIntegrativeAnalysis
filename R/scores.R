@@ -1,4 +1,4 @@
-#' Score function Continuous Outcome
+#' Score Function Without Confounding Function
 #'
 #' @noRd
 #' @param psi A numeric vector object. The estimated parameters. Assuming
@@ -6,129 +6,87 @@
 #' @param X A data.frame or matrix object. The covariates. Columns must be named.
 #' @param Y A numeric vector object. The outcome of interest.
 #' @param A An integer vector object. The observed treatment.
-#' @param wgt A numeric vector object. The case weights.
+#' @param outcome.type A character object. The type of outcome. Must be one of
+#'  "cont" or "bin".
+#' @param mu A numeric vector object. The estimated main effects.
 #' @param ps A numeric vector object. The estimated propensity score.
-#' @param mu0 A numeric vector object. The estimated outcome of the A = 0 model.
+#' @param inv.sig2 A numeric vector object. The inverse of the conditional variance.
+#' @param wgt A numeric vector object. An optional weight.
 #'
 #' @returns A numeric vector. The score function in the order of input `psi`.
+#'
 #' @keywords internal
-.score.cont <- function(psi, X, Y, A, wgt, ps, mu0) {
+.score.no.confounding <- function(psi, X, Y, A, outcome.type, mu, ps, inv.sig2, wgt) {
 
   stopifnot(
-    "`psi` must be a numeric vector" = !missing(psi) && .isNumericVector(psi),
+    "`psi` must be a named numeric vector" = !missing(psi) &&
+      .isNamedNumericVector(psi),
     "`X` must be a named numeric matrix" = !missing(X) &&
-      {.isNamedNumericMatrix(X)  || ncol(X) == 0L} &&
-      ncol(X) == {length(psi) - 1L} && all(colnames(X) %in% names(psi)),
+      {ncol(X) == 0L || .isNamedNumericMatrix(X, nms = names(psi)[-1L])} &&
+      ncol(X) == {length(psi) - 1L},
     "`Y` must be a numeric vector" = !missing(Y) && .isNumericVector(Y, nrow(X)),
     "`A` must be a binary vector" = !missing(A) && .isIntegerVector(A, nrow(X)) &&
       length(unique(A)) <= 2L,
-    "`wgt` must be a numeric vector" = !missing(wgt) && .isNumericVector(wgt, nrow(X)),
-    "`ps` must be a numeric vector" = !missing(ps) && .isNumericVector(ps, nrow(X)),
-    "`mu0` must be a numeric vector" = !missing(mu0) && .isNumericVector(mu0, nrow(X))
+    "`outcome.type` must be provided" = !missing(outcome.type),
+    "`mu` must be a numeric vector" = !missing(mu) && .isNumericVector(mu, nrow(X)),
+    "`ps` must be a numeric vector" = !missing(ps) &&
+      {.isNumericVector(ps, nrow(X)) | .isNumericVector(ps, 1L)},
+    "`inv.sig2` must be a numeric vector" = !missing(inv.sig2) &&
+      .isNumericVector(inv.sig2, nrow(X)),
+    "`wgt` must be a numeric vector" = !missing(wgt) &&
+      .isNumericVector(wgt, nrow(X))
   )
 
-  # match covariate columns to psi names
-  # the first element will always be the intercept term and is unmatched
-  idx <- match(names(psi), colnames(X))[-1L]
+  hte <- .HTE(psi = psi, X = X, outcome.type = outcome.type)
+  dhte <- .dHTE(psi = psi, X = X, outcome.type = outcome.type)
 
-  H <- {Y - mu0 - A * drop({psi[1L] + X[, idx, drop = FALSE] %*% psi[-1L]})} *
-    {A - ps} * wgt
+  H <- {Y - mu - A * hte} * {A - ps} * inv.sig2 * wgt
 
-  c(mean(H), colMeans(X[, idx, drop = FALSE] * H)) |> unname()
+  colMeans(dhte * H) |> unname()
 }
 
-#' Score function Binary Outcome
+#' Roots of the Score Function
 #'
 #' @noRd
-#' @param psi A numeric vector object. The estimated parameters. Assuming
-#'   an intercept is present in the model.
-#' @param X A data.frame or matrix object. The covariates. Columns must be named.
-#' @param Y A numeric vector object. The outcome of interest.
-#' @param A An integer vector object. The observed treatment.
-#' @param wgt A numeric vector object. The case weights.
-#' @param ps A numeric vector object. The estimated propensity score.
-#' @param mu0 A numeric vector object. The estimated outcome of the A = 0 model.
+#' @param X A matrix object. The covariates. Columns must be named.
+#' @param initial.guess A numeric vector object. The starting parameter values.
+#' @param fit.name A character object. Used for printing error messages. Should
+#'   uniquely describe the call.
+#' @param score.func A character. The type of outcome. Must be "basic".
+#'   this input is not used here, but included to match that of future pkg
+#' @param ... Additional inputs required for score function.
 #'
-#' @returns A numeric vector. The score function in the order of input `psi`.
+#' @returns A numeric vector of the location of the root.
+#'
+#' @importFrom rootSolve multiroot
+#' @include scores.R stopTests.R
 #' @keywords internal
-.score.binary <- function(psi, X, Y, A, wgt, ps, mu0) {
+.rootsOfScore <- function(X, initial.guess, fit.name, score.func, ...) {
+
+  dots <- list(...)
 
   stopifnot(
-    "`psi` must be a numeric vector" = !missing(psi) && .isNumericVector(psi),
     "`X` must be a named numeric matrix" = !missing(X) &&
-      {.isNamedNumericMatrix(X) || ncol(X) == 0L} &&
-      ncol(X) == {length(psi) - 1L} && all(colnames(X) %in% names(psi)),
-    "`Y` must be a binary vector" = !missing(Y) && .isNumericVector(Y, nrow(X)) &&
-      length(unique(Y)) <= 2L,
-    "`A` must be a binary vector" = !missing(A) && .isIntegerVector(A, nrow(X)) &&
-      length(unique(A)) <= 2L,
-    "`wgt` must be a numeric vector" = !missing(wgt) && .isNumericVector(wgt, nrow(X)),
-    "`ps` must be a numeric vector" = !missing(ps) && .isNumericVector(ps, nrow(X)),
-    "`mu0` must be a numeric vector" = !missing(mu0) && .isNumericVector(mu0, nrow(X))
+      {.isNamedNumericMatrix(X) || ncol(X) == 0L},
+    "`initial.guess` must be a named numeric vector" = !missing(initial.guess) &&
+      .isNamedNumericVector(initial.guess),
+    "`fit.name` must be a character object" = !missing(fit.name) &&
+      .isCharacterVector(fit.name, 1L),
+    "`score.func` must be one of 'basic' 'integ'" = !missing(score.func) &&
+      .isCharacterVector(score.func, 1L) && score.func %in% c("basic", "integ"),
+    "`...` must contain additional inputs" = length(dots) != 0L
   )
 
-  # match covariate columns to psi names
-  # the first element will always be the intercept term and is unmatched
-  idx <- match(names(psi), colnames(X))[-1L]
-  # pmin() avoids issues with infinities when par estimates are off the rails
-  eXpsi <- pmin(drop({psi[1L] + X[, idx, drop = FALSE] %*% psi[-1L]}) |> exp(), 1e8)
+  func <- .score.no.confounding
 
-  wgt <- wgt * 2.0 * eXpsi / {eXpsi + 1.0}^2 / {mu0 * (1.0 - mu0)}
-
-  H <- {Y - mu0 - A * {eXpsi - 1.0} / {eXpsi + 1.0}} * {A - ps} * wgt
-
-  c(mean(H), colMeans(X[, idx, drop = FALSE] * H)) |> unname()
+  tryCatch(rootSolve::multiroot(f = func, start = initial.guess, X = X, ...)$root,
+           warning = function(w) {
+             message(w$message, " for ", fit.name, "\n\t",
+                     "parameters set to 0.0")
+             rep(0.0, ncol(X) + 1L)
+           },
+           error = function(e) {
+             stop("unable to obtain root of Score for ", fit.name, "\n\t",
+                  e$message, call. = FALSE)
+           })
 }
-
-#' The Evaluated Score Function
-#'
-#' @noRd
-#' @param data A list object. Must contain elements
-#'   {Y, X, A, q, mu0, ps, ml.mu1, ml.mu0, ml.ps}
-#' @param psi A numeric vector object The estimated parameters.
-#' @param outcome.type A character object. The type of outcome. Must be one of
-#'   'cont' or 'bin'.
-#'
-#' @returns The Score evaluated at psi.
-#'
-#' @keywords internal
-.evaluatedScore <- function(data, psi, outcome.type, contName) {
-
-  stopifnot(
-    "`data` must be a list containing {X, Y, A, q, ml.mu0, ml.ps, ml.sigma0}" =
-      !missing(data) && is.list(data) &&
-      all(c("X", "Y", "A", "q", "ml.mu0", "ml.ps", "ml.sigma0") %in% names(data)),
-    "`data$ml.sigma0` must be a scalar numeric" = .isNumericVector(data$ml.sigma0, 1L),
-    "`data$X must be a matrix" = is.matrix(data$X),
-    "`psi` must be a named numeric vector of length ncol(X) + 1" =
-      !missing(psi) && .isNumericVector(psi) && !is.null(names(psi)),
-    "`outcome.type` must be a character" = !missing(outcome.type) &&
-      .isCharacterVector(outcome.type, 1L) && all(outcome.type %in% c("cont", "bin")),
-    "`contName` must be a character vector" = !missing(contName) &&
-      {is.null(contName) || .isCharacterVector(contName)} &&
-      all(contName %in% colnames(data$X)),
-    "`psi` must be of length(contName) + 1" = length(psi) == {length(contName) + 1L}
-  )
-
-  if (outcome.type == "cont") {
-    .score.cont(psi = psi,
-                X = data$X[, contName, drop = FALSE],
-                Y = data$Y,
-                A = data$A,
-                wgt = data$q,
-                ps = data$ml.ps,
-                mu0 = data$ml.mu0) / data$ml.sigma0
-  } else if (outcome.type == "bin") {
-    .score.binary(psi = psi,
-                  X = data$X[, contName, drop = FALSE],
-                  Y = data$Y,
-                  A = data$A,
-                  wgt = data$q,
-                  ps = data$ml.ps,
-                  mu0 = data$ml.mu0)
-  } else {
-    stop("unrecognized outcome type", call. = FALSE)
-  }
-}
-
-

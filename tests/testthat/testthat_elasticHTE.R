@@ -463,22 +463,17 @@ test_that("`.elasticHTE()` returns expected results", {
                      sqrt.V.rt_eff = sqrt_V_rt_eff,
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
-                     psi.elastic = est_bias$elastic,
+                     psi.elastic = est_bias,
                      n.rwe = n_rwe, n.boot = 10L,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
-    cis$CIs.inf <- rbind(cis$CIs.inf,
-                         "elastic.debiased" = cis$CIs.inf["elastic", ])
-    cis$CIs.sup <- rbind(cis$CIs.sup,
-                         "elastic.debiased" = cis$CIs.sup["elastic", ])
 
     psi <- rbind(psi_list$psi,
-                 "elastic" = est_bias$elastic,
-                 "elastic.debiased" = est_bias$elastic.debiased)
+                 "elastic" = est_bias)
     ve <- rbind(perm_result$V.est,
-                "elastic" = nuispar$V.elastic,
-                "elastic.debiased" = nuispar$V.elastic)
+                "elastic" = nuispar$V.elastic)
     nuispar$V.elastic <- NULL
+    nuispar$eta <- {perm_result$eta %*% Sigma_SS_matrices$sqrt.inv.Sigma.SS} |> drop()
 
     obj <- c(list("call" = NA,
                   "psi" = psi, "ve" = ve,
@@ -586,22 +581,17 @@ test_that("`.elasticHTE()` returns expected results; one covariate", {
                      sqrt.V.rt_eff = sqrt_V_rt_eff,
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
-                     psi.elastic = est_bias$elastic,
+                     psi.elastic = est_bias,
                      n.rwe = n_rwe, n.boot = 10L,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
-    cis$CIs.inf <- rbind(cis$CIs.inf,
-                         "elastic.debiased" = cis$CIs.inf["elastic", ])
-    cis$CIs.sup <- rbind(cis$CIs.sup,
-                         "elastic.debiased" = cis$CIs.sup["elastic", ])
 
     psi <- rbind(psi_list$psi,
-                 "elastic" = est_bias$elastic,
-                 "elastic.debiased" = est_bias$elastic.debiased)
+                 "elastic" = est_bias)
     ve <- rbind(perm_result$V.est,
-                "elastic" = nuispar$V.elastic,
-                "elastic.debiased" = nuispar$V.elastic)
+                "elastic" = nuispar$V.elastic)
     nuispar$V.elastic <- NULL
+    nuispar$eta <- {perm_result$eta %*% Sigma_SS_matrices$sqrt.inv.Sigma.SS} |> drop()
 
     obj <- c(list("call" = NA,
                   "psi" = psi, "ve" = ve,
@@ -709,22 +699,17 @@ test_that("`.elasticHTE()` returns expected results; no covariate", {
                      sqrt.V.rt_eff = sqrt_V_rt_eff,
                      sqrt.V.eff = perm_result$sqrt.V.eff,
                      psi = psi_list$psi, ve = perm_result$V.est,
-                     psi.elastic = est_bias$elastic,
+                     psi.elastic = est_bias,
                      n.rwe = n_rwe, n.boot = 10L,
                      thres.psi = thres.psi,
                      Tstat = Tstat)
-    cis$CIs.inf <- rbind(cis$CIs.inf,
-                         "elastic.debiased" = cis$CIs.inf["elastic", ])
-    cis$CIs.sup <- rbind(cis$CIs.sup,
-                         "elastic.debiased" = cis$CIs.sup["elastic", ])
 
     psi <- rbind(psi_list$psi,
-                 "elastic" = est_bias$elastic,
-                 "elastic.debiased" = est_bias$elastic.debiased)
+                 "elastic" = est_bias)
     ve <- rbind(perm_result$V.est,
-                "elastic" = nuispar$V.elastic,
-                "elastic.debiased" = nuispar$V.elastic)
+                "elastic" = nuispar$V.elastic)
     nuispar$V.elastic <- NULL
+    nuispar$eta <- {perm_result$eta %*% Sigma_SS_matrices$sqrt.inv.Sigma.SS} |> drop()
 
     obj <- c(list("call" = NA,
                   "psi" = psi, "ve" = ve,

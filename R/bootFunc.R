@@ -91,7 +91,6 @@
                                 c.gamma = c.gamma,
                                 sqrt.V.rt_eff = sqrt.V.rt_eff,
                                 sqrt.V.eff = sqrt.V.eff)
-
   # 2 x n_cov matrix
   apply(gen_value, MARGIN = 2L, FUN = stats::quantile,
         probs = c(0.0125, 0.9875), type = 5L, na.rm = TRUE)

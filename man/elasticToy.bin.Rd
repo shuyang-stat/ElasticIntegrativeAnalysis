@@ -9,11 +9,11 @@
 elasticToy.bin provides two datasets. The elasticToy.bin.rct
 100 participant records; elasticToy.bin.rwe 500 participant records. Each
 data.frame provides the following:
-\describe{
-\item{Y}{A binary outcome.}
-\item{X1}{A continuous covariate.}
-\item{X2}{A continuous covariate.}
-\item{A}{A binary treatment variable}
+\itemize{
+\item Y: A binary outcome.
+\item X1: A continuous covariate.
+\item X2: A continuous covariate.
+\item A: A binary treatment variable
 }
 }
 \usage{

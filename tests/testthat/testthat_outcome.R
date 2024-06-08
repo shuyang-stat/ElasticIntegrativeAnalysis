@@ -36,43 +36,43 @@ test_that("`.outcome()` returns expected errors", {
                "`A` must be a binary vector")
 
   A <- rep(1L, 10L)
-  expect_error(.outcome(X = X, Y = Y, A = A),
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont"),
                "`wgt` must be a numeric vector")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = rep("a", 10)),
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = rep("a", 10)),
                "`wgt` must be a numeric vector")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = matrix(1.0, 10L, 1L)),
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = matrix(1.0, 10L, 1L)),
                "`wgt` must be a numeric vector")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = rep(1.0, 9L)),
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = rep(1.0, 9L)),
                "`wgt` must be a numeric vector")
 
   wgt <- rep(1.0, 10L)
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt),
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt),
                "`sieve.degree` must be a scalar numeric")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = "a"),
                "`sieve.degree` must be a scalar numeric")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = TRUE),
                "`sieve.degree` must be a scalar numeric")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = c(1.0, 2.0)),
                "`sieve.degree` must be a scalar numeric")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = matrix(1, 1L, 1L)),
                "`sieve.degree` must be a scalar numeric")
 
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = 2L),
                "`method` must be provided")
 
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = 2L, method = "glm"),
                "`method.controls` must be a list")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = 2L, method = "glm",
                         method.controls = c("family" = "binomial")),
                "`method.controls` must be a list")
-  expect_error(.outcome(X = X, Y = Y, A = A, wgt = wgt,
+  expect_error(.outcome(X = X, Y = Y, A = A, outcome.type = "cont", wgt = wgt,
                         sieve.degree = 2L, method = "glm",
                         method.controls = 1.0),
                "`method.controls` must be a list")
@@ -95,27 +95,33 @@ test_that("`.outcome()` returns the expected results", {
 
   res <- list()
 
-  res$mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$me0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                              sieve.degree = 1L,
                              subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
                              method = "glm",
                              method.controls = method.controls)
-  res$ml.mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$me0.conditional.var <- stats::var({Y[1L:{n/2}] - res$me0[1L:{n/2}]})
+
+  res$ml.me0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
                                 method = "glm",
                                 method.controls = method.controls)
-  res$ml.sigma0 <- {{Y[1L:{n/2}] - res$ml.mu0[1L:{n/2}]}^2} |> mean() |> sqrt()
+  res$ml.me0.conditional.var <- stats::var({{Y[1L:{n/2}] - res$ml.me0[1L:{n/2}]}})
 
-  res$ml.mu1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$ml.me1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(FALSE, n/2), rep(TRUE, n/2)),
                                 method = "glm",
                                 method.controls = method.controls)
 
+  res$inv.sig2 <- rep(1.0 / res$me0.conditional.var, nrow(X))
+  res$ml.inv.sig2 <- rep(1.0 / res$ml.me0.conditional.var, nrow(X))
+
   expect_equal(.outcome(X = X, Y = Y, A = A, wgt = wgt, sieve.degree = 2L,
                         method = "glm",
-                        method.controls = method.controls),
+                        method.controls = method.controls,
+                        outcome.type = "cont"),
                res)
 
 })
@@ -135,27 +141,33 @@ test_that("`.outcome()` returns the expected results; single covariate", {
 
   res <- list()
 
-  res$mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$me0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                              sieve.degree = 1L,
                              subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
                              method = "glm",
                              method.controls = method.controls)
-  res$ml.mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$me0.conditional.var <- var({{Y[1L:{n/2}] - res$me0[1L:{n/2}]}})
+
+  res$ml.me0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
                                 method = "glm",
                                 method.controls = method.controls)
-  res$ml.sigma0 <- {{Y[1L:{n/2}] - res$ml.mu0[1L:{n/2}]}^2} |> mean() |> sqrt()
+  res$ml.me0.conditional.var <- var({{Y[1L:{n/2}] - res$ml.me0[1L:{n/2}]}})
 
-  res$ml.mu1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$ml.me1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(FALSE, n/2), rep(TRUE, n/2)),
                                 method = "glm",
                                 method.controls = method.controls)
 
+  res$inv.sig2 <- rep(1.0 / res$me0.conditional.var, nrow(X))
+  res$ml.inv.sig2 <- rep(1.0 / res$ml.me0.conditional.var, nrow(X))
+
   expect_equal(.outcome(X = X, Y = Y, A = A, wgt = wgt, sieve.degree = 2L,
                         method = "glm",
-                        method.controls = method.controls),
+                        method.controls = method.controls,
+                        outcome.type = "cont"),
                res)
 
 })
@@ -174,27 +186,33 @@ test_that("`.outcome()` returns the expected results; no covariate", {
 
   res <- list()
 
-  res$mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$me0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                              sieve.degree = 1L,
                              subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
                              method = "glm",
                              method.controls = method.controls)
-  res$ml.mu0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$me0.conditional.var <- var({{Y[1L:{n/2}] - res$me0[1L:{n/2}]}^2})
+
+  res$ml.me0 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(TRUE, n/2), rep(FALSE, n/2)),
                                 method = "glm",
                                 method.controls = method.controls)
-  res$ml.sigma0 <- {{Y[1L:{n/2}] - res$ml.mu0[1L:{n/2}]}^2} |> mean() |> sqrt()
+  res$ml.me0.conditional.var <- var({{Y[1L:{n/2}] - res$ml.me0[1L:{n/2}]}^2})
 
-  res$ml.mu1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
+  res$ml.me1 <- .sieveEstimator(X = X, Y = Y, wgt = wgt,
                                 sieve.degree = 2L,
                                 subset = c(rep(FALSE, n/2), rep(TRUE, n/2)),
                                 method = "glm",
                                 method.controls = method.controls)
 
+  res$inv.sig2 <- rep(1.0 / res$me0.conditional.var, nrow(X))
+  res$ml.inv.sig2 <- rep(1.0 / res$ml.me0.conditional.var, nrow(X))
+
   expect_equal(.outcome(X = X, Y = Y, A = A, wgt = wgt, sieve.degree = 2L,
                         method = "glm",
-                        method.controls = method.controls),
+                        method.controls = method.controls,
+                        outcome.type = "cont"),
                res)
 
 })

@@ -49,10 +49,13 @@
   psi_list_p <- .psiEst(data.rct = data.rct, data.rwe = data.rwe,
                         outcome.type = outcome.type, models = models)
 
+  # convert matrix of parameter estimates to a vector with names
+  # set as the combination approx_method.covariate_name
   nms <- c(t(outer(rownames(psi_list_p$psi), colnames(psi_list_p$psi),
                    FUN = paste, sep = ".")))
   psi_list_p$psi <- c(t(psi_list_p$psi))
   names(psi_list_p$psi) <- nms
+
   psi_list_p
 }
 
@@ -131,15 +134,22 @@
 .computeV <- function(ptb, n.rwe) {
 
   # compute Vrt and Veff
+
+  # identify the columns of ptb for the efficient estimator
   eff_columns <- grepl("eff.", colnames(ptb))
+  # extract only those columns
   ptb_eff <- ptb[, eff_columns, drop = FALSE]
+
+  # drop the names to only the covariate names
   colnames(ptb_eff) <- strsplit(colnames(ptb_eff), ".", fixed = TRUE) |>
     lapply(utils::tail, n = -1L) |> lapply(paste, collapse = ".")
-
   V_eff <- {stats::var(ptb_eff, na.rm = TRUE) * n.rwe} |> matrix(ncol = sum(eff_columns))
 
+  # identify the columns of ptb for the RCT estimator
   rt_columns <- grepl("rt.", colnames(ptb))
+  # extract only those columns
   ptb_rt <- ptb[, rt_columns, drop = FALSE]
+  # rename to the covariate onnly names
   colnames(ptb_rt) <- names(ptb_eff)
   V_rt <- {stats::var(ptb_rt, na.rm = TRUE) * n.rwe} |> matrix(ncol = sum(rt_columns))
 
@@ -216,6 +226,7 @@
       all(c("RWE", "RCT", "outcome", "ps", "sieve.degree", "contName") %in% names(models))
   )
 
+  # +1 for intercept
   n_cov <- length(models$contName) + 1L
   n_rwe <- nrow(data.rwe$X)
 
@@ -252,13 +263,18 @@
     warning("sqrtm returned complex matrix; only real component used", call. = FALSE)
   }
 
+  # estimate the variance of each estimated covariate for all estimator
+  # convert vector result to an n_estimator x n_cov matrix
   ve <- apply(pert_est$ptb, 2L, stats::var) |> matrix(nrow = n_cov) |> t()
 
+  # set column names as the covariate names
   colnames(ve) <- strsplit(colnames(pert_est$ptb), ".", fixed = TRUE) |>
     lapply("[", 2L) |> unlist() |> unique()
+  # set row names as the estimator names
   rownames(ve) <- strsplit(colnames(pert_est$ptb), ".", fixed = TRUE) |>
     lapply("[", 1L) |> unlist() |> unique()
 
+  # eta will be standardized later
   eta <- colMeans(pert_est$Shat.rw.psihat.rt) * sqrt(n_rwe)
   names(eta) <- colnames(ve)
 

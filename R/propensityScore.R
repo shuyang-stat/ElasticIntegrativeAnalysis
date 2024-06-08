@@ -7,17 +7,22 @@
 #' @param wgt A numeric vector object. An optional case weight.
 #' @param sieve.degree A scalar numeric object. The degree of the polynomial
 #'   used to define the sieve model.
+#' @param method A character indicating the regression method to be used.
+#'   Must be one of {"glm", "SL"}.
 #' @param method.controls A list object. User specified inputs to
-#'   SuperLearner::SuperLearner(). Element names must match formal arguments of
-#'   SuperLearner::SuperLearner().
+#'   regression method.
+#' @param models A character vector. Which propensity score models to estimate.
+#'   Must contain one or more of {"ps", "ml.ps"}.
 #'
 #' @returns A list with elements "ps": the basic model estimates, and
 #'   "ml.ps": the sieve model estimates
 #'
 #' @include sieveEstimator.R
 #' @keywords internal
-.propensityScore <- function(X, A, wgt, sieve.degree, method, method.controls,
+.propensityScore <- function(X, A, wgt,
+                             sieve.degree, method, method.controls,
                              models) {
+
   stopifnot(
     "`X` must be a named numeric matrix" = !missing(X) &&
       {.isNamedNumericMatrix(X) || ncol(X) == 0L},

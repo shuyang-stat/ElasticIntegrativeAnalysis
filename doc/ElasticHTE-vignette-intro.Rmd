@@ -1,0 +1,584 @@
+---
+title: "ElasticIntegrative - Elastic Integrative Analysis for Heterogeneous Treatment Effect"
+author: "Shu Yang, Chenyin Gao, and Shannon T. Holloway"
+date: May 13, 2024
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{ElasticIntegrative-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+  \newcommand{\eff}{\mathrm{eff}}
+  \newcommand{\elas}{\mathrm{elas}}
+  \newcommand{\rt}{\mathrm{rt}}
+  \newcommand{\rw}{\mathrm{rw}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment=NA)
+opt <- options()
+options(continue="  ", width=70, prompt=" ")
+on.exit(options(opt))
+library(ElasticIntegrative, quietly = TRUE)
+set.seed(23456L)
+```
+
+## Introduction
+
+A critical step in the era of precision medicine is the characterization of how
+patient characteristics are related to treatment effect, also termed the
+heterogeneity of treatment effect (HTE). Randomized trials (RTs) are the 
+gold-standard method for evaluating treatment effect because randomization of 
+treatment ensures that treatment groups are comparable and biases are minimized
+to the extent possible. However, issues such as cost and eligibility criteria
+often lead to small trial sizes and/or limited patient diversity, which renders 
+the trial underpowered to estimate the HTE and unable to estimate the HTE for 
+specific patient characteristics. In contrast, the extensive real-word (RW)
+data made available through electronic health records, claims databases, and 
+disease registries offer larger sample sizes and broader demographic and 
+diversity than RT cohorts. However, to capitalize on this vast and growing
+resource to improve the drug discovery process requires new statistical tools to
+address selection bias, unmeasured confounding, data quality, etc.
+
+In Yang, S. et al., 2023, we proposed an elastic algorithm for combining the RT
+and RW data for accurate and robust estimation of the HTE function with a vector
+of known effect modifiers. The primary identification assumptions underpinning 
+our method are 
+
+
+i. the transportability of the HTE from the RT data to the target population 
+and 
+ii. the strong ignorability of treatment assignment in the RT data. 
+
+If the RW sample satisfies the parallel assumptions (i) and (ii), it is 
+comparable to the RT sample in estimating the HTE. In this case, integrating the 
+RW sample would increase the efficiency of HTE estimation. 
+
+Toward this end, we used the semiparametric efficiency theory 
+(Bickel et al., 1993; Robins, 1994) to derive a semiparametrically efficient 
+integrative estimator of the HTE. However, the RW sample may violate the desirable 
+comparability assumption (i) or (ii). In this case, integrating the RW sample 
+would lead to bias in HTE estimation. Utilizing the design advantage of RTs, we 
+derived a preliminary test statistic to gauge the comparability and reliability 
+of the RW data and decide whether or not to use the RW data in an integrative 
+analysis. Therefore, our test-based elastic integrative estimator uses the 
+efficient combination strategy for estimation if the violation test is 
+insignificant and retains only the RT data if the violation test is significant.
+
+The proposed estimator belongs to pre-test estimation by construction (Giles \& Giles, 1993) and is non-regular. To account for the effect of pre-testing, we characterize the asymptotic properties of the test-based elastic integrative estimator via orthogonal projections: one is affected by the pre-testing, and the other is not. Lastly, we proposed an elastic procedure to construct confidence intervals (CIs), which are adaptive to the local and fixed alternatives and have good finite-sample coverage properties.
+
+\textbf{ElasticIntegrative} is an `R` package implementation of our proposed estimator.
+
+## The Estimator
+
+First, we will fix notation. We define $Y$ as a continuous or binary outcome, 
+$X$ as a vector of auxiliary variables including $Z$, a vector of 
+pre-treatment covariates of interest, and $A$ is the binary treatment 
+$A \in \{0,1\}$. Further, let $\delta = 1$ denote RT participation with size 
+$m$, and $\delta = 0$ denote RW study participation with size $n$; it is
+expected that $n >> m$. We define $V$ as the summary of the entire record of 
+observed variable $(A, X, \delta, Y)$. It is required that both the RT and RW 
+data contain $Z$, but these datasets may contain different auxiliary variables $X$.
+
+Under the potential outcomes framework, the individual treatment effect is 
+$Y(1) - Y(0)$, and $\tau_{Z} = E\{Y(1) - Y(0) |Z\}$ characterizes the 
+heterogeneous treatment effect (HTE). For a binary outcome, $Y \in \{0,1\}$, 
+$\tau(Z)$ is also called the causal risk difference. We assume the HTE function 
+to be
+
+$$
+\tau(Z) = \tau_{\psi_0}(Z) = E\{Y(1) - Y(0) |Z; \psi_0\},
+$$
+where $\psi_0 \in R^p$ is a vector of unknown parameters. The implementation 
+assumes the following functional forms for the HTE: for continuous outcome, $Y$, 
+$\tau_{\psi_0}(Z) = Z^{T} \psi_0$; for binary outcome 
+$\tau_{\psi_0}(Z) = [\exp(Z^{T} \psi_0) - 1]/[\exp(Z^{T} \psi_0) + 1]$.
+
+The semiparametric efficiency score (SES) of $\psi_0$ for a continuous outcome 
+is
+$$
+S_{\psi_0}(V, \delta) = Z[\sigma_{\delta}^2(X)]^{-1}[Y - \tau_{\psi_0}(Z) A - \mu_{\delta}(X)][A - e_{\delta}(X)],
+$$
+where $\mu_{\delta}(X)$ is the outcome mean function, $\sigma_{\delta}^2(X)$ is 
+the outcome variance function, and $e_{\delta}(X)$ is the propensity score. 
+
+The SES of $\psi_0$ for a binary outcome is
+$$
+S_{\psi_0}(V, \delta) = Z \frac{2 \exp(Z^{T} \psi_0)}
+{\left[\exp(Z^{T} \psi_0) + 1\right]^2} 
+\frac{[Y - \tau_{\psi_0}(Z) A - \mu_{\delta}(X)][A - e_{\delta}(X)]}
+{\mu_{\delta}(X)\left[1 - \mu_{\delta}(X)\right]}
+.
+$$
+
+The following test statistic is used to detect if the assumption that the HTE
+function is transportable from the RW sample to the target population.
+
+$$
+T = \left[ n^{-1/2} \sum_{i \in \mathcal{B}} \widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V_i)\right]^T \widehat{\Sigma}^{-1}_{SS}\left[ n^{-1/2} \sum_{i \in \mathcal{B}} \widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V_i)\right],
+$$
+where $\widehat{\Sigma}^{-1}_{SS}$ is a consistent estimator of the asymptotic
+variance of $n^{-1/2} \sum_{i \in \mathcal{B}} \widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V_i)$.
+The test statistic $T$ measures the distance between $n^{-1/2} \sum_{i \in \mathcal{B}} \widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V_i)$ and zero. If the idealistic assumption that the HTE function is transportable from the RW sample to the target RT population, we expect $T$ to be small. Under standard asymptotic theory, $T \sim \chi^2_P$ under the null hypothesis $E\{S_{\mathrm{RW}, \psi_0}(V)\} = 0$.
+
+
+The elastic integrative estimator $\widehat{\psi}_{\mathrm{elas}}$ is then
+obtained by solving
+$$
+\sum_{i \in \mathcal{A} \cup\mathcal{B}}\left[
+\delta_i \widehat{S}_{\psi}(V_i) + \mathbf{1}(T < c_{\gamma})(1 - \delta_i)\widehat{S}_{\psi}(V_i) 
+\right] = 0,
+$$
+where $c_\gamma$ can be either chosen by minimizing the mean squared error of 
+$n^{1/2}(\widehat{\psi}_{\mathrm{elas}}-\psi_0)$
+approximated by $n_{\gamma}$ samples or fixed at the 100(1-0.05)$^{th}$ percentile of $\chi^2_P$.
+
+
+## The Proposed Procedure
+
+The procedure implemented in `elasticHTE()` is as follows:
+
+1. Obtain a preliminary estimator of $\psi_0$ ($\widehat{\psi}_p$)
+
+    - For each of the RW and RT datasets, obtain estimators for the propensity 
+    score, $e_{\delta}(X)$, using a parametric model, $\widehat{e}_{\delta}$.
+    Define $\widehat{e} = (\widehat{e}_{1}, \widehat{e}_{0})$.
+    - For each of the RW and RT datasets, obtain estimators for the main effects 
+    for each treatment arm, $\mu_{\delta}(X, A = 0), \mu_{\delta}(X, A = 1)$,
+    using a parametric model, $\widehat{\mu}_{\delta}^A$, $A \in (0,1)$.
+    Define $\widehat{\mu}^A = (\widehat{\mu}_{1}^A, \widehat{\mu}_{0}^A)$.
+    - Substitute $\widehat{e}$ and $\widehat{\mu}^A$, $A \in (0,1)$ into 
+    $S_{\psi_0}(V)$ and solve $P_{N}\widehat{S}_{\psi_0}(V) = 0$.
+
+2. Obtain the efficient estimator for the RT dataset, $\widehat{\psi}_{\mathrm{RT}}$. 
+
+    - Obtain the estimator for the propensity score, $e_{1}(X)$, using the 
+    Sieve expansion of the parametric model used in Step 1, $\widehat{e}_{1}^S$.
+    - Obtain estimators for the main effects for each treatment arm, 
+    $\mu_{1}(X, A = 0), \mu_{1}(X, A = 1)$,
+    using the Sieve expansion of the parametric model used in Step 1, 
+    $\widehat{\mu}_{1}^{A, S}$, $A \in (0,1)$.
+    - Substitute $\widehat{e}_{1}^S$ and $\widehat{\mu}_{1}^{A,S}$, $A \in (0,1)$ 
+    into $S_{\psi_0}(V, \delta = 1)$ and solve $P_{N}\widehat{S}_{\psi_0}(V, \delta = 1) = 0$.
+
+3. Obtain the efficient estimator for the combined RT + RW dataset, $\widehat{\psi}_{\mathrm{eff}}$.
+
+    - For each of the RW and RT datasets, obtain estimators for the propensity 
+    score, $e_{\delta}(X)$, using the Sieve expansion of the parametric model used in Step 1, 
+    $\widehat{e}_{\delta}^S$. Define $\widehat{e}^S = (\widehat{e}_1^S, \widehat{e}_0^S)$.
+    - For each of the RW and RT datasets, obtain estimators for the main effects 
+    for each treatment arm, $\mu_{\delta}(X, A = 0), \mu_{\delta}(X, A = 1)$,
+    using the Sieve expansion of the parametric model used in Step 1, 
+    $\widehat{\mu}_{\delta}^{A,S}$, $A \in (0,1)$. Define 
+    $\widehat{\mu}^{A,S} = (\widehat{\mu}_1^{A,S}, \widehat{\mu}_0^{A,S})$, $A \in (0,1)$.
+    - Substitute $\widehat{e}^S$ and $\widehat{\mu}^{A,S}$, $A \in (0,1)$
+    into $S_{\psi_0}(V)$ and solve $P_{N}\widehat{S}_{\psi_0}(V) = 0$
+    \end{itemize}
+    
+4. Evaluate the SES for the RW using $\widehat{\psi}_{\mathrm{RT}}$, 
+   $\widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V_i)$.
+
+5. Estimate the asymptotic variance of $n^{-1/2} \sum_{i \in \mathcal{B}} \widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V_i)$, 
+$\widehat{\Sigma}^{-1}_{SS}$, using perturbation-based resampling, where 
+Steps 1-4 are repeated $n_{pert}$ times.
+
+6. Choose $c_{\gamma}$ and obtain the elastic integrative estimator $\widehat{\psi}_{\mathrm{elas}}$.
+
+7. Estimate confidence intervals for the elastic integrative 
+   estimator using a bootstrap procedure with an explicit soft threshold. 
+
+
+## R Implementation
+
+### Convenience Function `dataInput()`
+
+To streamline the input structure of the main function, a convenience function,
+`dataInput()`, is provided to identify key variables such as outcome and
+treatment as well as to specify the required underlying outcome and propensity
+score models. The proposed 
+estimator requires model specifications for the outcome and the propensity for 
+treatment for each of the RT and RW datasets separately. These models can be uniquely 
+defined for each dataset, but they must share a common specification of the 
+pre-treatment covariates, $Z$, that define the treatment effect.
+
+
+
+The call structure of `dataInput()` is as follows
+```{r eval = FALSE}
+dataInput(data, outcome.model, ps.model) 
+```
+
+Input `data` is a standard `data.frame` object containing all covariates, the outcome variable, and the treatment variable for either the RT or the RW datasets. Inputs `outcome.model` and `ps.model` are standard `formula` objects of the form LHS $\sim$ RHS specifying the outcome and propensity for treatment models specific to input `data`.
+
+The function returns a list that can be passed to the main estimating function,
+`elasticHTE()`. Contained therein are the model matrix, outcome variable, 
+treatment variable, and model covariates in the format expected by `elasticHTE()`. 
+Though we recommend using this function to prepare your data, it is not
+required; the list can be prepared by the user external to the package.
+See `?dataInput` for details of the returned list object.
+
+### Example usage
+
+Provided with the package are two datasets "elasticToy.cont" and "elasticToy.bin",
+which provide example datasets for a continuous and binary outcome, respectively.
+These datasets are provided to facilitate examples and are not representative
+of any real-world clinical trial or observational datasets.
+
+For now, we will use the continuous outcome data. To load the data
+```{r load_cont_data}
+data("elasticToy.cont", package = "ElasticIntegrative")
+```
+
+Now in the environment are two data.frames, `elasticToy.cont.rct`, a
+data.frame depicting a randomized clinical trial with 100 participants, and 
+`elasticToy.cont.rwe`, a data.frame depicting a real-world observational dataset
+based on 500 participants. The available covariates for both datasets are
+`X1` and `X2`, both continuous variables; the treatment, `A`, a binary 
+$\in \{0,1\}$; and `Y`, a continuous outcome of interest.
+
+```{r summary_cont_rwe}
+summary(elasticToy.cont.rwe)
+```
+
+```{r summary_cont_rct}
+summary(elasticToy.cont.rct)
+```
+
+We'll begin with the RT dataset and assume that the model for the outcome 
+of interest is $Y \sim X1 + X2 * A$ and that for the propensity score is $A \sim X1*X2$. 
+This specification of the outcome model means that the main effects model is defined
+as
+$$
+\mu_{1}^A \sim \beta_0 + \beta_1~X1 + \beta_2~X2
+$$
+and the HTE is defined as
+$$
+\tau_{\psi_{0}}(Z) \sim \psi^0_0 + \psi^1_0 ~ X2.
+$$
+To generate the data object for `elasticHTE()`,
+```{r create_data_rct}
+data_rct <- dataInput(data = elasticToy.cont.rct,
+                      outcome.model = Y ~ X1 + X2*A,
+                      ps.model = A ~ X1*X2)
+```
+
+Object `data_rct` is a list with elements `$Y`, `$mainName`, `$contName`, `$A`, `$psName`, and `$X`.
+
+<br><br>
+
+<div style="margin:0.25in;padding:0.1in;background-color:#FBFCCC">
+For standard formula expressions, this convenience function should work well; however, we
+always encourage users to review the list to ensure that the inputs have been
+properly interpreted. Specifically,
+
+
+- Element `$Y` should be equivalent to the outcome variable taken from the dataset.
+
+```{r test1}
+isTRUE(all.equal(data_rct$Y, elasticToy.cont.rct$Y, 
+                 check.attributes = FALSE))
+```
+
+- Element `$mainName` should contain all of the covariates of the main effects 
+  model. Note that this does not include an intercept.
+  If we had used an intercept only model, `$mainName = 1`.
+```{r test2}
+all(c("X1", "X2") %in% data_rct$mainName)
+```
+- Element `$contName` should contain all of the covariates that define the 
+  treatment effect model. If we had used an intercept only model, `$contName = 1`.
+```{r test3}
+all(c("X2") %in% data_rct$contName)
+```
+
+- Element `$A` should be equivalent to the treatment variable taken from the dataset.
+```{r test4}
+isTRUE(all.equal(data_rct$A, elasticToy.cont.rct$A, 
+                 check.attributes = FALSE))
+```
+
+- Element `$psName` should contain all of the covariates of the propensity score
+model. 
+```{r test5}
+all(c("X1", "X2", "X1:X2") %in% data_rct$psName)
+```
+
+- Element `$X` should be a matrix containing all of the covariates specified in
+elements `$mainName`, `$contName`, and `$psName`. If all of these models had been
+specified as intercept only, `$X` will be an $m \times 0$ matrix.
+```{r test6}
+model_cov <- c(data_rct$mainName, 
+               data_rct$contName, 
+               data_rct$psName)
+all(model_cov %in% colnames(data_rct$X))
+```
+
+- Note that for factor covariates, the naming convention of model covariates and the design matrix will differ from the provided formulae in that they will include the non-base factor levels in the names.
+
+
+</div>
+
+<br><br>
+
+
+We assume for the RW data, the model for the outcome of interest is
+$Y \sim X2 * A$ and that for the propensity score as $A \sim X1$. This outcome
+model defines
+$$
+\mu_{0}^A \sim \beta_0 + \beta_1~X2
+$$
+and the HTE is defined as
+$$
+\tau_{\psi_{0}}(Z) \sim \psi^0_0 + \psi^1_0 ~ X2,
+$$
+which is equivalent to that of the RT data -- a requirement for this estimator.
+
+```{r create_data_rwe}
+data_rwe <- dataInput(data = elasticToy.cont.rwe,
+                      outcome.model = Y ~ X2*A,
+                      ps.model = A ~ X1)
+```
+
+### Elastic Integrative Estimator
+
+The main function of the package is `elasticHTE()`, which implements the procedure
+described previously. The call structure is as follows
+```{r run1, eval = FALSE}
+elasticHTE(data.rct, data.rwe, ...,
+           outcome.type = c("cont", "bin"),
+           ps.rct = NULL,
+           sieve.degree = 2L,
+           outcome.method = c("glm", "SL"),
+           outcome.controls = list("family" = "gaussian"),
+           ps.method = c("glm", "SL"),
+           ps.controls = list("family" = "quasibinomial"),
+           n.pert = 100L,
+           fixed = FALSE,
+           n.gamma = 1000L,
+           n.boot = 100L,
+           thres.psi = NULL)
+```
+
+Input arguments `data.rct` and `data.rwe` are lists, most easily generated
+following the example above in Section 4.1.
+The remaining optional inputs are
+
+- `outcome.type`: A character. The type of outcome. Must be one of
+   \{"cont", "bin"\} indicating a continuous or binary outcome, respectively.
+- `ps.rct`: A numeric vector specifying the propensity for treatment of the 
+   RT data, if known. If provided, $e_1(X)$ will not be estimated in
+   Steps 1-3.
+- `sieve.degree`: A positive integer $>$ 1. The order of the polynomial
+   defining the Sieve expansion of the models proposed to estimate 
+   $e_{\delta}(X)$, $\mu_{\delta}(X, A = 0)$, and $\mu_{\delta}(X, A = 1)$ 
+   (Steps 2 and 3).
+- `outcome.method`: A character. The regression method to be used to estimate
+   the parameters of the models specified for the main effects 
+   $\mu_{\delta}(X, A = 0)$ and $\mu_{\delta}(X, A = 1)$ (Steps 1-3). 
+   Must be one of \{'glm', 'SL'\} indicating `stats::glm()` or 
+   `SuperLearner::SuperLearner()`, respectively.
+- `outcome.controls`: A named list. Additional inputs provided to
+   `stats::glm()` or
+   `SuperLearner::SuperLearner()` for the main effects regression analyses.
+- `ps.method`: A character. The regression method to be used to estimate the
+   parameters of the models specified for the propensity score $e_{\delta}(X)$. 
+   (Steps 1-3)
+   Must be one of \{'glm', 'SL'\} indicating `stats::glm()` or 
+   `SuperLearner::SuperLearner()`, respectively.
+- `ps.controls`: A named list. Additional inputs provided to
+   `stats::glm()` or
+   `SuperLearner::SuperLearner()` for the propensity regression analyses.
+- `n.pert`: An integer. The number of perturbations to generate when
+   estimating the asymptotic variance. (Step 5)
+- `fixed`: A logical. How to select the tuning parameter
+   $c_{\gamma}$. FALSE, the default, uses an adaptive
+   selection strategy; TRUE selects a fixed threshold strategy.
+   (Step 6)
+- `n.gamma`: An integer. The number of samples to generate to estimate
+   $c_{\gamma}$ if the adaptive procedure is selected and to estimate the
+   variance of the elastic integrative estimator. (Step 6)
+- `n.boot`: An integer. The number of bootstrap iterations to use 
+   when estimating the confidence intervals. (Step 7)
+- `thres.psi`: NULL or a scalar numeric. The soft-threshold for constructing
+   adaptive confidence intervals. If NULL, a default value of $\sqrt{\log(n)}$ is used.
+   (Step 7)
+
+#### Example Usage - Continuous Outcome
+
+In its simplest usage, the estimators, standard error and confidence intervals 
+can be obtained by providing only the data and model specification returned
+by `dataInput()`.
+
+```{r result1}
+result1 <- withr::with_seed(1234L,
+                            elasticHTE(data_rct, data_rwe))
+result1
+```
+
+The truncated summary information provided through the `print()` method includes
+the non-intercept components of $\widehat{\psi}_{\mathrm{elas}}$, its
+standard error, and its confidence intervals; the value of the
+test statistic; the selected $c_{\gamma}$; and $\eta$, 
+$\left\{\frac{1}{n_{\gamma}} \sum_{i = 1} ^{n_{\gamma}} \widehat{S}_{\mathrm{RW}, \widehat{\psi}_{\mathrm{RT}}} (V)\right\} ~ \widehat{\Sigma}_{SS}^{-1/2}$, i.e., $T = \eta^T \eta$
+
+```{r print_class_result1}
+print(is(result1))
+```
+The returned object is of S3 class `elasticHTE`, which extends a list containing
+
+- `$psi`, a matrix of the estimated $\psi_p$, $\psi_{\mathrm{eff}}$, $\psi_{\mathrm{RT}}$, and
+$\psi_{\mathrm{elas}}$.
+```{r print_psi_result1}
+result1$psi
+```
+
+- `$ve`, a matrix of the standard errors of $\widehat{\psi}_p$, $\widehat{\psi}_{\mathrm{eff}}$, $\widehat{\psi}_{\mathrm{RT}}$, and
+$\widehat{\psi}_{\mathrm{elas}}$ obtained using perturbation-based resampling.
+```{r print_variance}
+result1$ve
+```
+
+- `$nuispar` a list detailing the $c_{\gamma}$ selection results and $\eta$, where $T = \eta^T \eta$
+```{r print_nuisance}
+result1$nuispar
+```
+
+- `$Tstat` The estimated test-statistic.
+```{r print_test}
+result1$Tstat
+```
+
+- `$CIs.inf` and `$CIs.sup` matrices of the estimated confidence intervals.
+```{r print_CIs}
+result1$CIs.inf
+result1$CIs.sup
+```
+
+- `$conservative` a logical $I(\mathrm{Tstat} < \mathrm{thres.psi})$
+```{r print_conservative}
+result1$conservative
+```
+
+- `$CI.settings` storing the important settings used in estimating the confidence intervals.
+```{r print_settings}
+result1$CI.settings
+```
+
+From our elastic integrative analysis, the test statistic is $T=$ `r format(result1$Tstat, digits = 3)`, which indicates that there is no strong evidence to support the presence of hidden confounding in the real-world observational dataset. As a result, the elastic integrative estimator $\psi_{\mathrm{elas}}$ remains the same as $\psi_{\mathrm{eff}}$. However, our elastic integrative analysis involves a pre-testing procedure, which could introduce additional randomness. Thus, it is reasonable to observe that the estimated standard error of $\psi_{\mathrm{elas}}$ is larger than that of $\psi_{\mathrm{eff}}$ in `result1$ve`. Based on the estimated confidence intervals in `result1$CIs.inf` and `result1$CIs.sup`, we conclude the estimated causal effect associated with `X2` is (`r format(result1$CIs.inf[4L, 2L], digits = 2L)`, `r format(result1$CIs.sup[4L, 2L], digits = 2L)`) based on our elastic integrative analysis.
+
+
+<br><br>
+
+By default, the `stats::glm()` function is used to obtain all parameter estimates.
+If instead, one needs to explore multiple machine learning models or settings 
+to estimate the model parameters, the `SuperLearner::SuperLearner()` 
+tools can be accessed by specifying `outcome.method` and/or `ps.method` as `SL`.
+This suite of tools uses cross-validation to create a weighted average of the
+requested models. There are over 40 models available through the SuperLearner 
+package (see `?SuperLearner` for further details) and almost all inputs to 
+`SuperLearner()` can be controlled by the user through the `outcome.controls`
+or `ps.controls` inputs. Inputs that cannot be controlled by the user,
+`Y`, `X`, `newX`, and `obsWeight`, depend on the dataset and treatment group,
+and are set internally.
+
+For illustration, we will use only the `glm` equivalent library `SL.glm`
+to estimate the parameters of the propensity score models. This is an overly
+simple usage of `SuperLearner()` provided only to illustrate how to 
+modify the needed inputs.
+
+```{r run_result2}
+result2 <- withr::with_seed(1234L, 
+                            elasticHTE(data_rct, data_rwe, 
+                                       ps.method = "SL", 
+                                       ps.controls = list("family" = "quasibinomial",
+                                                          "SL.library" = "SL.glm")))
+result2
+```
+
+Similar conclusions can be drawn based `result2` as we have in `result1`.
+
+#### Example Usage - Binary Outcome
+
+To load the binary toy datasets
+```{r load_bin_data}
+data("elasticToy.bin", package = "ElasticIntegrative")
+```
+In the environment are now two data.frames, `elasticToy.bin.rct`, a
+data.frame depicting a randomized clinical trial with 100 participants, and 
+`elasticToy.bin.rwe`, a data.frame depicting a real-world observational dataset
+based on 500 participants. The available covariates for both datasets are
+`X1` and `X2`, both continuous variables; the treatment, `A`, a binary 
+$\in \{0,1\}$; and `Y`, a binary outcome of interest.
+
+```{r summary_bin_rwe}
+summary(elasticToy.bin.rwe)
+```
+
+```{r summary_bin_rct}
+summary(elasticToy.bin.rct)
+```
+
+<br><br>
+
+We will first define the `data.rct` and `data.rwe` inputs using the `dataInputs()`
+convenience function. We define the model for the outcome 
+of interest is $Y \sim X1 + X2 * A$. For binary outcomes, the interpretation
+of this model specification is a bit different than what we saw for the 
+continuous outcome. Here, this specification of the outcome model means that 
+the main effects model is defined as
+$$
+\mu_{1}^A \sim \beta_0 + \beta_1~X1 + \beta_2~X2
+$$
+(as was the case for the continuous outcome), but the HTE is defined as
+$$
+\tau_{\psi_{0}}(Z) \sim \frac{\exp{(\psi^0_0 + \psi^1_0 ~ X2}) - 1}{\exp{(\psi^0_0 + \psi^1_0 ~ X2}) + 1}.
+$$
+We assume the same model as before for the propensity score: $A \sim X1*X2$. 
+
+To generate the data object for input `data.rct`,
+```{r create_data_rct_bin}
+data_rct <- dataInput(data = elasticToy.bin.rct,
+                      outcome.model = Y ~ X1 + X2*A,
+                      ps.model = A ~ X1*X2)
+```
+
+And we will assume equivalent models for the RW dataset
+```{r create_data_rwe_bin}
+data_rwe <- dataInput(data = elasticToy.bin.rwe,
+                      outcome.model = Y ~ X1 + X2*A,
+                      ps.model = A ~ X1*X2)
+```
+
+<br><br>
+
+In its simplest usage for binary outcomes, the estimators, standard error and 
+confidence intervals can be obtained by providing the data and model specification returned
+by `dataInput()`, specifying `outcome.type = "bin"`, as setting the family
+of the outcome regression method to "quasibinomial" (the regressions analyses
+are weighted; using family = "binomial" will result in 
+"non-integer #successes in a binomial glm" warning generated by `stats::glm`.)
+
+```{r result3}
+result3 <- withr::with_seed(2345L,
+                            elasticHTE(data_rct, data_rwe, outcome.type = "bin", 
+                                       outcome.controls = list("family" = "quasibinomial")))
+print(result3)
+```
+
+
+## References
+
+Bickel P. J., Klaassen C., Ritov Y., and Wellner J. (1993). 
+Efficient and adaptive inference in semiparametric models. Johns Hopkins University Press.
+
+\noindent Giles J. A. and Giles D. E. A. (1993). 
+Pre-test estimation and testing in econometrics: Recent developments. 
+\textit{Journal of Economic Surveys}, \textbf{7}(2), 145--197.
+
+\noindent Robins J. M. (1994). 
+Correcting for non-compliance in randomized trials using structural nested mean models. 
+\textit{Communications in Statistics-Theory and Methods}, \textbf{23}(8), 2379--2412.
+
+\noindent Yang, S., Gao, C., Zeng, D., and Wang, X. (2023). Elastic integrative analysis
+of randomised trial and real-world data for treatment heterogeneity estimation.
+\textit{Journal of the Royal Statistical Society, Series B}, \textbf{85}(3), 575--596.
+

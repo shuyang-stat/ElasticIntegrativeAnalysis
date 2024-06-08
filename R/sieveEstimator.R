@@ -12,7 +12,7 @@
 #'
 #' @returns The predicted outcome for all participants in `X`.
 #'
-#' @importFrom stats as.formula glm predict.glm
+#' @importFrom stats as.formula glm glm.control predict.glm
 #' @include stopTests.R
 .fitglm <- function(X, Y, wgt, subset, method.controls) {
 
@@ -28,16 +28,21 @@
       is.list(method.controls)
   )
 
-  glm.args <- names(formals(stats::glm))
+  # including both glm and glm.control here as glm allows users to construct
+  # the control from the arguments pass through the ellipsis
+  glm.args <- c(names(formals(stats::glm)), names(formals(stats::glm.control)))
   if (!all(names(method.controls) %in% glm.args)) {
-    stop("`method.controls` is not properly defined", call. = FALSE)
+    stop("`method.controls` is not properly defined\n\t",
+         paste(setdiff(names(method.controls), glm.args), collapse = ","),
+         " are not formal arguments of glm or glm.control",
+         call. = FALSE)
   }
 
   cannot_provide <- c("formula", "data", "weights", "subset")
   if (any(cannot_provide %in% names(method.controls))) {
     warning("Element(s) ",
             paste(intersect(cannot_provide, names(method.controls)), collapse = ", "),
-            " cannot be provided as input; input overwritten.")
+            " cannot be provided as input; input overwritten.", call. = FALSE)
   }
 
   if (ncol(X) > 0L) {
@@ -60,7 +65,7 @@
   stats::predict.glm(object = fit, newdata = data, type = "response") |> c() |> unname()
 }
 
-#' Sieve Estimator Using SuperLearning
+#' Sieve Estimator Using SuperLearner
 #'
 #' @noRd
 #' @param X A numeric matrix object. The covariates. Columns must be named.
@@ -90,16 +95,19 @@
       is.list(method.controls)
   )
 
+  # SuperLearner does not currently provide an ellipsis input
   sl.args <- names(formals(SuperLearner::SuperLearner))
   if (!all(names(method.controls) %in% sl.args)) {
-    stop("`method.controls` is not properly defined", call. = FALSE)
+    stop("`method.controls` is not properly defined",
+         paste(setdiff(names(method.controls), sl.args), collapse = ","),
+         " are not formal arguments of SuperLearner", call. = FALSE)
   }
 
   cannot_provide <- c("Y", "X", "newX", "obsWeights")
   if (any(cannot_provide %in% names(method.controls))) {
     warning("Element(s) ",
             paste(intersect(cannot_provide, names(method.controls)), collapse = ", "),
-            " cannot be provided as input; input overwritten.")
+            " cannot be provided as input; input overwritten.", call. = FALSE)
   }
 
   method.controls$Y <- Y[subset]
@@ -112,7 +120,7 @@
                     stop("SuperLearner encountered errors\n\t",
                          e$message, call. = FALSE)
                   })
-  # STH CONSIDER VERIFYING NOT ALL ZERO
+
   fit$SL.predict |> drop()
 }
 
@@ -126,7 +134,7 @@
 #'   regression.
 #' @param sieve.degree A scalar numeric object. The degree of the polynomial
 #'   used to define the sieve model.
-#' @param method A character object. One of `SL`, `gam`, or `glm`.
+#' @param method A character object. One of `SL` or `glm`.
 #' @param method.controls A list object. User specified inputs to the
 #'   regression method. Element names must match formal arguments of the
 #'   regression method.
@@ -146,8 +154,8 @@
     "`subset` must be provided" = !missing(subset),
     "`sieve.degree` must be a scalar numeric" = !missing(sieve.degree) &&
       .isNumericVector(sieve.degree, 1L),
-    "`method` must be one of 'SL', 'gam', or 'glm'" = !missing(method) &&
-      method %in% c("SL", "gam", "glm"),
+    "`method` must be one of 'SL', 'glm'" = !missing(method) &&
+      method %in% c("SL", "glm"),
     "`method.controls` must be provided" = !missing(method.controls)
   )
 

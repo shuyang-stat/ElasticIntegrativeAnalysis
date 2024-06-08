@@ -443,11 +443,11 @@ test_that("`.sieveEstimator()` returns expected errors", {
   expect_error(.sieveEstimator(X = X, Y = rep(1.0, 10L), wgt = rep(1.0, 10L),
                                sieve.degree = 2L,
                                subset = rep(TRUE, 10L)),
-               "`method` must be one of 'SL', 'gam', or 'glm'")
+               "`method` must be one of 'SL', 'glm'")
 
   expect_error(.sieveEstimator(X = X, Y = rep(1.0, 10L), wgt = rep(1.0, 10L),
                                sieve.degree = 2L,
-                               subset = rep(TRUE, 10L), method = "gam"),
+                               subset = rep(TRUE, 10L), method = "glm"),
                "`method.controls` must be provided")
 })
 
